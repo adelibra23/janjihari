@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DheKasir</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #f0f2f8;
+            --card: #ffffff;
+            --card-border: #e8ecf4;
+            --text: #1a1f36;
+            --text-muted: #8892aa;
+            --primary: #4f46e5;
+            --primary-soft: rgba(79,70,229,0.10);
+            --input-bg: #f8fafc;
+            --input-border: #e2e8f0;
+            --nav-bg: rgba(255,255,255,0.98);
+            --header-bg: rgba(255,255,255,0.95);
+            --divider: #e8ecf4;
+            --surface: #f0f2f8;
+            --surface-hover: #e4e8f2;
+            --sidebar-bg: #ffffff;
+            --sidebar-overlay: rgba(15,20,40,0.45);
+        }
+        .dark {
+            --bg: #0d1117;
+            --card: #161b27;
+            --card-border: #242c3d;
+            --text: #e8edf8;
+            --text-muted: #556070;
+            --primary: #6366f1;
+            --primary-soft: rgba(99,102,241,0.12);
+            --input-bg: #0d1117;
+            --input-border: #242c3d;
+            --nav-bg: rgba(13,17,23,0.98);
+            --header-bg: rgba(13,17,23,0.92);
+            --divider: #161b27;
+            --surface: #0d1117;
+            --surface-hover: #242c3d;
+            --sidebar-bg: #161b27;
+            --sidebar-overlay: rgba(0,0,0,0.65);
+        }
+
+        * { box-sizing: border-box; }
+        html, body { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+        html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        body.sidebar-open { overflow: hidden !important; position: fixed; width: 100%; }
+        body.modal-open { overflow: hidden !important; position: fixed; width: 100%; }
+
+        /* ── SPLASH ── */
+        #splash-screen {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(145deg, #1e1b4b 0%, #312e81 30%, #4f46e5 65%, #7c3aed 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden; transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #splash-screen.fade-out { opacity: 0; transform: scale(1.05); pointer-events: none; }
+        #splash-screen.skip-instant { display: none !important; }
+        .splash-orb { position: absolute; border-radius: 50%; filter: blur(60px); animation: orbFloat 6s ease-in-out infinite; }
+        .splash-orb-1 { width: 300px; height: 300px; background: rgba(167,139,250,0.25); top: -80px; right: -60px; }
+        .splash-orb-2 { width: 200px; height: 200px; background: rgba(99,102,241,0.3); bottom: 20px; left: -50px; animation-delay: 2s; }
+        .splash-orb-3 { width: 150px; height: 150px; background: rgba(236,72,153,0.15); top: 50%; left: 20%; animation-delay: 4s; }
+        @keyframes orbFloat { 0%,100%{transform:translateY(0px) scale(1);}50%{transform:translateY(-20px) scale(1.05);} }
+        .splash-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px); background-size: 32px 32px; }
+        .splash-logo-wrap { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 0; }
+        .splash-ring { position: absolute; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.15); animation: ringPulse 2s ease-in-out infinite; }
+        .splash-ring-1 { width: 100px; height: 100px; }
+        .splash-ring-2 { width: 130px; height: 130px; animation-delay: 0.3s; }
+        .splash-ring-3 { width: 165px; height: 165px; animation-delay: 0.6s; }
+        @keyframes ringPulse { 0%,100%{opacity:0.4;transform:scale(1);}50%{opacity:0.15;transform:scale(1.04);} }
+        .splash-logo-box { position: relative; width: 80px; height: 80px; background: rgba(255,255,255,0.12); backdrop-filter: blur(20px); border: 1.5px solid rgba(255,255,255,0.25); border-radius: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1px rgba(255,255,255,0.1),0 20px 60px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.3); animation: logoAppear 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; z-index: 2; }
+        @keyframes logoAppear { 0%{opacity:0;transform:scale(0.5) rotate(-10deg);}100%{opacity:1;transform:scale(1) rotate(0deg);} }
+        .splash-logo-letter { font-size: 36px; font-weight: 900; color: #fff; line-height: 1; }
+        .splash-sparkle { position: absolute; width: 5px; height: 5px; background: rgba(255,255,255,0.8); border-radius: 50%; animation: sparkleAnim 1.8s ease-in-out infinite; }
+        .sp1 { top: -4px; right: 14px; } .sp2 { bottom: 10px; right: -5px; animation-delay: 0.6s; width: 4px; height: 4px; } .sp3 { top: 18px; left: -5px; animation-delay: 1.2s; width: 3px; height: 3px; }
+        @keyframes sparkleAnim { 0%,100%{opacity:0;transform:scale(0);}50%{opacity:1;transform:scale(1);} }
+        .splash-app-name { margin-top: 28px; font-size: 30px; font-weight: 900; color: #fff; letter-spacing: -0.5px; text-align: center; animation: textSlideUp 0.6s ease 0.6s both; }
+        .splash-tagline { margin-top: 6px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); letter-spacing: 0.15em; text-transform: uppercase; text-align: center; animation: textSlideUp 0.6s ease 0.75s both; }
+        @keyframes textSlideUp { 0%{opacity:0;transform:translateY(16px);}100%{opacity:1;transform:translateY(0);} }
+        .splash-progress-area { position: absolute; bottom: 72px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 48px; animation: textSlideUp 0.6s ease 1s both; }
+        .splash-progress-track { width: 100%; height: 3px; background: rgba(255,255,255,0.12); border-radius: 2px; overflow: hidden; }
+        .splash-progress-bar { height: 100%; background: linear-gradient(90deg,rgba(255,255,255,0.6),rgba(255,255,255,1)); border-radius: 2px; width: 0%; transition: width 0.25s ease; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .splash-status-text { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; text-transform: uppercase; text-align: center; min-height: 14px; transition: opacity 0.3s; }
+        .splash-version { position: absolute; bottom: 32px; font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.25); letter-spacing: 0.08em; text-transform: uppercase; text-align: center; }
+
+        /* ── Card ── */
+        .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 20px; transition: background 0.3s, border-color 0.3s; }
+
+        /* ── HEADER ── */
+        #app-header { position: sticky; top: 0; z-index: 40; background: var(--header-bg); border-bottom: 1px solid var(--card-border); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 0 16px; height: 62px; display: flex; align-items: center; justify-content: space-between; transition: background 0.3s, border-color 0.3s; }
+        #hamburger-btn { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--card); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+        #hamburger-btn:active { transform: scale(0.92); }
+        #hamburger-btn .bar { display: block; width: 16px; height: 1.5px; background: var(--text); border-radius: 2px; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+        #hamburger-btn .bars { display: flex; flex-direction: column; gap: 4px; }
+        #hamburger-btn.open .bar:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+        #hamburger-btn.open .bar:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        #hamburger-btn.open .bar:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
+
+        /* ── HEADER BRAND: always show DheKasir app logo, NOT store name ── */
+        .header-brand { display: flex; align-items: center; gap: 9px; position: absolute; left: 50%; transform: translateX(-50%); }
+        .header-app-logo { width: 32px; height: 32px; background: linear-gradient(135deg,#4f46e5,#7c3aed); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 900; flex-shrink: 0; }
+        .header-app-title { font-size: 15px; font-weight: 800; color: var(--text); }
+
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+        .hdr-btn { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--card-border); background: var(--card); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; color: var(--text-muted); position: relative; }
+        .hdr-btn:active { transform: scale(0.92); }
+
+        #sidebar-overlay { position: fixed; inset: 0; z-index: 80; background: var(--sidebar-overlay); opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(4px); }
+        #sidebar-overlay.open { opacity: 1; pointer-events: all; }
+        #sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 272px; background: var(--sidebar-bg); z-index: 90; transform: translateX(-100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; border-right: 1px solid var(--card-border); }
+        #sidebar.open { transform: translateX(0); }
+        .sidebar-header { padding: 52px 20px 20px; border-bottom: 1px solid var(--card-border); }
+        .sidebar-store-logo { width: 52px; height: 52px; background: linear-gradient(135deg,#4f46e5,#7c3aed); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: 900; overflow: hidden; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(79,70,229,0.35); }
+        .sidebar-store-name { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+        .sidebar-store-addr { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+        .sidebar-version { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; background: var(--primary-soft); color: var(--primary); font-size: 9px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 12px; }
+        .sidebar-section-label { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); padding: 12px 8px 6px; }
+        .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 14px; cursor: pointer; transition: all 0.15s; color: var(--text-muted); font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+        .sidebar-item:active { transform: scale(0.97); }
+        .sidebar-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+        .sidebar-item:not(.active):hover { background: var(--surface); color: var(--text); }
+        .sidebar-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; background: var(--surface); transition: background 0.15s; }
+        .sidebar-item.active .sidebar-icon { background: var(--primary); color: #fff; }
+        .sidebar-badge { margin-left: auto; background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--card-border); }
+        .sidebar-dark-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 14px; background: var(--surface); cursor: pointer; }
+        .sidebar-dark-toggle span { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        .sidebar-dark-toggle .toggle-left { display: flex; align-items: center; gap: 10px; }
+
+        /* ── BOTTOM NAV — 5 items with center scan FAB ── */
+        #bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            max-width: 480px; margin: 0 auto;
+            background: var(--nav-bg);
+            border-top: 1px solid var(--card-border);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            z-index: 50;
+            padding: 8px 8px 20px;
+            display: flex; align-items: center; justify-content: space-around;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 10px; border-radius: 14px; cursor: pointer; transition: all 0.2s; color: var(--text-muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; min-width: 52px; position: relative; }
+        .nav-item i { font-size: 18px; transition: all 0.2s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active i { transform: translateY(-1px); }
+        .nav-item-pill { position: absolute; bottom: -2px; width: 20px; height: 3px; border-radius: 2px; background: var(--primary); opacity: 0; transition: opacity 0.2s,width 0.2s; }
+        .nav-item.active .nav-item-pill { opacity: 1; }
+        .nav-dot { position: absolute; top: 4px; right: 8px; width: 7px; height: 7px; background: #ef4444; border-radius: 50%; border: 1.5px solid var(--nav-bg); }
+
+        /* Center FAB scan button */
+        .nav-scan-fab {
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            cursor: pointer; transition: all 0.2s; position: relative;
+            min-width: 60px;
+        }
+        .nav-scan-fab-btn {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg,#4f46e5,#7c3aed);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 20px;
+            box-shadow: 0 4px 18px rgba(79,70,229,0.45);
+            transition: all 0.2s;
+            margin-top: -18px;
+            border: 3px solid var(--nav-bg);
+        }
+        .nav-scan-fab:active .nav-scan-fab-btn { transform: scale(0.9); }
+        .nav-scan-fab-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--primary); margin-top: 2px; }
+
+        .tab-content { display: none; padding: 16px 16px 110px; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        input, select, textarea { background: var(--input-bg) !important; color: var(--text) !important; border-color: var(--input-border) !important; transition: background 0.3s,color 0.3s,border-color 0.3s; }
+        input::placeholder, textarea::placeholder { color: var(--text-muted) !important; }
+        select option { background: var(--card); color: var(--text); }
+
+        .modal-sheet { background: var(--card) !important; transition: background 0.3s; }
+        .surface { background: var(--surface) !important; transition: background 0.3s; }
+        .surface-hover:hover { background: var(--surface-hover) !important; }
+        .dk-divider { border-color: var(--card-border) !important; }
+        .text-muted { color: var(--text-muted) !important; }
+        .premium-gradient { background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); }
+
+        #reader { border-radius: 24px; overflow: hidden; background: #000; border: none !important; }
+
+        .receipt-paper { font-family: 'Courier New',Courier,monospace; font-size: 12px; line-height: 1.55; color: #111; background: #fff; width: 100%; }
+        .receipt-paper .rec-header { text-align:center; padding-bottom:8px; border-bottom:1px dashed #bbb; margin-bottom:8px; }
+        .receipt-paper .rec-logo { display:flex; justify-content:center; align-items:center; margin-bottom:6px; }
+        .receipt-paper .rec-logo img { max-height:52px; max-width:120px; object-fit:contain; }
+        .receipt-paper .rec-logo-placeholder { width:48px; height:48px; background:#4f46e5; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; font-weight:900; font-family:'Plus Jakarta Sans',sans-serif; }
+        .receipt-paper .rec-storename { font-size:15px; font-weight:900; font-family:'Plus Jakarta Sans',sans-serif; letter-spacing:0.5px; text-transform:uppercase; margin:0; }
+        .receipt-paper .rec-addr { font-size:10px; color:#555; margin:1px 0 0; }
+        .receipt-paper .rec-phone { font-size:10px; color:#555; margin:1px 0; }
+        .receipt-paper .rec-meta { font-size:9px; color:#888; margin-top:4px; }
+        .receipt-paper .rec-divider { border:none; border-top:1px dashed #bbb; margin:6px 0; }
+        .receipt-paper .rec-section-title { font-size:9px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:0.08em; margin:4px 0 3px; }
+        .receipt-paper .rec-item-row { display:flex; justify-content:space-between; align-items:flex-start; padding:1px 0; }
+        .receipt-paper .rec-item-name { flex:1; padding-right:8px; word-break:break-word; }
+        .receipt-paper .rec-item-subtotal { white-space:nowrap; font-weight:700; }
+        .receipt-paper .rec-item-detail { font-size:10px; color:#666; padding-left:6px; }
+        .receipt-paper .rec-total-row { display:flex; justify-content:space-between; font-size:14px; font-weight:900; font-family:'Plus Jakarta Sans',sans-serif; padding:4px 0; }
+        .receipt-paper .rec-pay-row { display:flex; justify-content:space-between; font-size:11px; color:#444; padding:1px 0; }
+        .receipt-paper .rec-change-row { display:flex; justify-content:space-between; font-size:12px; font-weight:700; border-top:1px dotted #bbb; padding:4px 0 0; margin-top:3px; }
+        .receipt-paper .rec-footer { text-align:center; font-size:9px; color:#999; margin-top:8px; padding-top:6px; border-top:1px dashed #bbb; }
+        .receipt-paper .rec-debt-badge { display:inline-block; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; font-size:11px; font-weight:700; padding:3px 12px; margin:4px auto; font-family:'Plus Jakarta Sans',sans-serif; text-align:center; }
+
+        .stock-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; }
+        .badge-in { background:#d1fae5; color:#059669; } .badge-out { background:#fee2e2; color:#dc2626; } .badge-opname { background:#e0e7ff; color:#4338ca; }
+        .badge-critical { background:#fef2f2; color:#dc2626; } .badge-low { background:#fffbeb; color:#d97706; } .badge-ok { background:#f0fdf4; color:#16a34a; }
+        .dark .badge-in { background:#064e3b; color:#6ee7b7; } .dark .badge-out { background:#450a0a; color:#fca5a5; } .dark .badge-opname { background:#1e1b4b; color:#a5b4fc; }
+        .dark .badge-critical { background:#450a0a; color:#fca5a5; } .dark .badge-low { background:#422006; color:#fcd34d; } .dark .badge-ok { background:#052e16; color:#86efac; }
+
+        .notif-dot { width:8px; height:8px; background:#ef4444; border-radius:50%; display:inline-block; animation:pulse-notif 1.4s infinite; }
+        @keyframes pulse-notif { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.3);} }
+
+        .btn-hover:active { transform:scale(0.93); transition:0.1s; }
+        .animate-pop { animation:pop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes pop { 0%{transform:scale(0.9);opacity:0;}100%{transform:scale(1);opacity:1;} }
+
+        .switch { position:relative; display:inline-block; width:44px; height:24px; }
+        .switch input { opacity:0; width:0; height:0; }
+        .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#cbd5e1; transition:.4s; border-radius:34px; }
+        .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:#fff; transition:.4s; border-radius:50%; }
+        input:checked + .slider { background:#4f46e5; }
+        input:checked + .slider:before { transform:translateX(20px); }
+
+        #flash-btn { display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 28px; background:rgba(255,255,255,0.1); border:1.5px solid rgba(255,255,255,0.2); border-radius:20px; cursor:pointer; transition:all 0.2s; color:white; }
+        #flash-btn:active { transform:scale(0.93); }
+        #flash-btn.flash-on { background:rgba(254,240,138,0.22); border-color:rgba(253,224,71,0.6); box-shadow:0 0 18px rgba(253,224,71,0.25); }
+        #flash-btn .flash-icon { font-size:22px; transition:color 0.2s; color:rgba(253,224,71,0.5); }
+        #flash-btn.flash-on .flash-icon { color:#fde047; }
+        #flash-btn .flash-label { font-size:9px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; opacity:0.6; }
+        #flash-btn.flash-on .flash-label { opacity:1; }
+        #flash-btn:disabled { opacity:0.25; pointer-events:none; }
+
+        .printer-ready { color: #10b981 !important; } .printer-connecting { color: #f59e0b !important; animation: pulse-notif 1s infinite; } .printer-error { color: #ef4444 !important; } .printer-offline { color: var(--text-muted) !important; }
+        .printer-card { border-radius: 20px; border: 1px solid var(--card-border); background: var(--card); overflow: hidden; transition: all 0.3s; }
+        .printer-status-bar { height: 4px; transition: background 0.4s; border-radius: 0; }
+        .printer-status-bar.ready { background: linear-gradient(90deg,#10b981,#34d399); } .printer-status-bar.connecting { background: linear-gradient(90deg,#f59e0b,#fbbf24); animation: shimmer 1s linear infinite; background-size: 200% 100%; } .printer-status-bar.error { background: linear-gradient(90deg,#ef4444,#f87171); } .printer-status-bar.offline { background: var(--card-border); }
+        @keyframes shimmer { 0%{background-position:200% 0;}100%{background-position:-200% 0;} }
+
+        .bt-device-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; cursor: pointer; border: 1.5px solid var(--card-border); background: var(--surface); transition: all 0.2s; }
+        .bt-device-item:hover { border-color: var(--primary); background: var(--primary-soft); } .bt-device-item:active { transform: scale(0.97); } .bt-device-item.selected { border-color: var(--primary); background: var(--primary-soft); }
+        .settings-row { display:flex; align-items:center; justify-content:space-between; padding:14px 12px; border-bottom:1px solid var(--card-border); cursor:pointer; border-radius:12px; transition:background 0.2s; }
+        .settings-row:last-child { border-bottom:none; } .settings-row:active { background:var(--surface); }
+        .settings-icon { width:38px; height:38px; background:var(--surface); border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.3s; }
+
+        #cart-float { background: var(--card) !important; border-color: var(--card-border) !important; }
+        .cat-chip-active { background:#4f46e5 !important; color:#fff !important; } .cat-chip-inactive { background:var(--card) !important; color:var(--text-muted) !important; border:1px solid var(--card-border); }
+        .dk-section-label { font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); padding:1.25rem 12px 0.5rem; }
+        .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0; }
+
+        .dash-hero { background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%); border-radius: 24px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 8px 32px rgba(79,70,229,0.3); }
+        .dash-hero::before { content:''; position:absolute; top:-40px; right:-40px; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.06); }
+        .dash-hero::after { content:''; position:absolute; bottom:-30px; left:-20px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.04); }
+
+        .balance-mask { display: inline-block; transition: filter 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease; }
+        .balance-hidden .balance-mask { filter: blur(10px); opacity: 0.35; user-select: none; pointer-events: none; }
+        .balance-toggle-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.28); border-radius: 20px; cursor: pointer; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; color: rgba(255,255,255,0.9); backdrop-filter: blur(8px); flex-shrink: 0; line-height: 1; }
+        .balance-toggle-btn:active { transform: scale(0.90); } .balance-toggle-btn:hover { background: rgba(255,255,255,0.22); box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+        .balance-toggle-btn .btn-eye-icon { font-size: 11px; transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s; }
+        .balance-toggle-btn .btn-label { font-size: 9px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+        .balance-toggle-btn.hiding .btn-eye-icon { transform: scale(0.7) rotate(-20deg); opacity: 0.5; }
+
+        /* ── CONFIRM MODAL ── */
+        #modal-confirm { position: fixed; inset: 0; z-index: 9000; background: rgba(15,20,40,0.65); display: none; align-items: center; justify-content: center; padding: 24px; backdrop-filter: blur(6px); }
+        #modal-confirm.open { display: flex; }
+        .confirm-sheet { background: var(--card); border-radius: 28px; padding: 28px; width: 100%; max-width: 320px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); animation: pop 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+
+        /* ── LANGUAGE SELECTOR ── */
+        .lang-option { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; cursor: pointer; border: 1.5px solid var(--card-border); background: var(--surface); transition: all 0.2s; margin-bottom: 8px; }
+        .lang-option:hover { border-color: var(--primary); background: var(--primary-soft); }
+        .lang-option.selected { border-color: var(--primary); background: var(--primary-soft); }
+        .lang-option:active { transform: scale(0.97); }
+        .lang-flag { font-size: 22px; width: 32px; text-align: center; }
+        .lang-name { font-size: 13px; font-weight: 700; color: var(--text); }
+        .lang-native { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+        .lang-check { margin-left: auto; color: var(--primary); font-size: 14px; opacity: 0; transition: opacity 0.2s; }
+        .lang-option.selected .lang-check { opacity: 1; }
+    </style>
+</head>
+<body class="hide-scrollbar">
+
+<!-- SPLASH -->
+<div id="splash-screen">
+    <div class="splash-orb splash-orb-1"></div>
+    <div class="splash-orb splash-orb-2"></div>
+    <div class="splash-orb splash-orb-3"></div>
+    <div class="splash-grid"></div>
+    <div class="splash-logo-wrap">
+        <div class="splash-ring splash-ring-3"></div>
+        <div class="splash-ring splash-ring-2"></div>
+        <div class="splash-ring splash-ring-1"></div>
+        <div class="splash-logo-box">
+            <span class="splash-logo-letter" id="splash-logo-letter">D</span>
+            <div class="splash-sparkle sp1"></div>
+            <div class="splash-sparkle sp2"></div>
+            <div class="splash-sparkle sp3"></div>
+        </div>
+        <div class="splash-app-name" id="splash-app-name">DheKasir</div>
+        <div class="splash-tagline" id="splash-tagline">Sistem Kasir Digital UMKM</div>
+    </div>
+    <div class="splash-progress-area">
+        <div class="splash-status-text" id="splash-status">Memuat sistem...</div>
+        <div class="splash-progress-track">
+            <div class="splash-progress-bar" id="splash-progress"></div>
+        </div>
+    </div>
+    <div class="splash-version">DheKasir v1.4 • © 2025</div>
+</div>
+
+<!-- ═══ GLOBAL CONFIRM MODAL ═══ -->
+<div id="modal-confirm">
+    <div class="confirm-sheet">
+        <div class="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-trash-can text-red-500 text-lg"></i>
+        </div>
+        <h3 class="text-base font-black text-center mb-2" id="confirm-title">Hapus Produk?</h3>
+        <p class="text-[11px] text-center mb-6" style="color:var(--text-muted);" id="confirm-desc">Produk akan dihapus secara permanen dan tidak dapat dikembalikan.</p>
+        <div class="flex gap-3">
+            <button onclick="confirmCancel()" class="flex-1 py-3.5 rounded-2xl font-black text-xs uppercase surface" style="color:var(--text-muted);" data-i18n="btn_cancel">Batal</button>
+            <button onclick="confirmProceed()" class="flex-1 py-3.5 rounded-2xl font-black text-xs uppercase bg-red-500 text-white shadow-lg" id="confirm-ok-btn">Hapus</button>
+        </div>
+    </div>
+</div>
+
+<div id="app" class="max-w-md mx-auto min-h-screen relative flex flex-col" style="opacity:0;transition:opacity 0.5s ease;">
+
+    <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <div id="sb-logo" class="sidebar-store-logo">D</div>
+            <div class="sidebar-store-name" id="sb-store-name">DheKasir</div>
+            <div class="sidebar-store-addr" id="sb-store-addr">-</div>
+            <div class="sidebar-version"><i class="fa-solid fa-circle-check" style="font-size:8px;"></i> v1.4 Aktif</div>
+        </div>
+        <div class="sidebar-nav hide-scrollbar">
+            <div class="sidebar-section-label" data-i18n="menu_main">Menu Utama</div>
+            <div class="sidebar-item active" id="sb-home" onclick="switchTab('home'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-house" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_home">Beranda</span>
+            </div>
+            <div class="sidebar-item" id="sb-pos" onclick="switchTab('pos'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-cash-register" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_pos">Kasir / POS</span>
+            </div>
+            <div class="sidebar-item" id="sb-items" onclick="switchTab('items'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-box" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_inventory">Inventaris</span>
+            </div>
+            <div class="sidebar-section-label" data-i18n="menu_operational">Operasional</div>
+            <div class="sidebar-item" id="sb-stock" onclick="switchTab('stock'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-warehouse" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_stock">Manajemen Stok</span>
+                <span id="sb-stock-badge" class="sidebar-badge hidden">0</span>
+            </div>
+            <div class="sidebar-item" id="sb-debts" onclick="switchTab('debts'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-user-clock" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_debts">Buku Hutang</span>
+            </div>
+            <div class="sidebar-item" id="sb-data" onclick="switchTab('data'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-chart-bar" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_reports">Laporan & Data</span>
+            </div>
+            <div class="sidebar-section-label" data-i18n="menu_account">Akun</div>
+            <div class="sidebar-item" id="sb-settings" onclick="switchTab('settings'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-user-gear" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_settings">Pengaturan</span>
+            </div>
+            <div class="sidebar-item" onclick="openModal('modal-about'); closeSidebar()">
+                <div class="sidebar-icon"><i class="fa-solid fa-circle-info" style="font-size:13px;"></i></div>
+                <span data-i18n="nav_about">Tentang Aplikasi</span>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="sidebar-dark-toggle" onclick="document.getElementById('dark-mode-toggle').click()">
+                <div class="toggle-left">
+                    <i class="fa-solid fa-moon" style="color:var(--primary);font-size:13px;"></i>
+                    <span data-i18n="dark_mode">Tema Gelap</span>
+                </div>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </aside>
+
+    <!-- HEADER: always shows DheKasir app logo, not store branding -->
+    <header id="app-header">
+        <button id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+            <div class="bars"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+        </button>
+        <div class="header-brand">
+            <div class="header-app-logo">D</div>
+            <span class="header-app-title">DheKasir</span>
+        </div>
+        <div class="header-actions">
+            <button onclick="openNotifPanel()" id="notif-bell" class="hdr-btn" aria-label="Notifikasi">
+                <i class="fa-solid fa-bell" style="font-size:15px;"></i>
+                <span id="notif-count-badge" class="hidden" style="position:absolute;top:-3px;right:-3px;width:16px;height:16px;background:#ef4444;color:#fff;border-radius:50%;font-size:8px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid var(--nav-bg);">0</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1">
+
+        <!-- HOME -->
+        <section id="tab-home" class="tab-content active space-y-5">
+            <div class="dash-hero text-white relative z-10" id="dash-hero-wrap">
+                <div class="flex items-center justify-between mb-2" style="position:relative;z-index:2;">
+                    <p class="text-[10px] opacity-70 font-bold uppercase tracking-widest" data-i18n="dash_net_profit">Profit Bersih Toko</p>
+                    <button class="balance-toggle-btn" id="balance-toggle-btn" onclick="toggleBalanceVisibility()" aria-label="">
+                        <i class="fa-solid fa-eye btn-eye-icon" id="balance-eye-icon"></i>
+                        <span class="btn-label" id="balance-toggle-label" data-i18n="hide">Sembunyikan</span>
+                    </button>
+                </div>
+                <h2 class="text-3xl font-black mb-1" style="position:relative;z-index:2;">
+                    <span class="balance-mask" id="dash-profit">Rp 0</span>
+                </h2>
+                <div class="grid grid-cols-2 gap-4 border-t border-white/20 pt-5 mt-5" style="position:relative;z-index:2;">
+                    <div>
+                        <p class="text-[9px] opacity-60 font-bold uppercase tracking-widest mb-1" data-i18n="dash_today_income">Pemasukan Hari Ini</p>
+                        <p class="text-base font-bold"><span class="balance-mask" id="dash-omzet">Rp 0</span></p>
+                    </div>
+                    <div>
+                        <p class="text-[9px] opacity-60 font-bold uppercase tracking-widest mb-1" data-i18n="dash_total_receivable">Total Piutang</p>
+                        <p class="text-base font-bold text-rose-200"><span class="balance-mask" id="dash-debt">Rp 0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center px-5 py-4 card shadow-sm cursor-pointer" onclick="switchTab('stock')">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-xs"></i></div>
+                    <p class="text-xs font-black uppercase text-muted" data-i18n="stock_status">Status Stok</p>
+                </div>
+                <p class="text-xs font-black text-rose-500" id="dash-low-stock">0 Item Menipis</p>
+            </div>
+            <div class="card p-5 shadow-sm">
+                <h3 class="text-[10px] font-black uppercase tracking-widest mb-4 text-center text-muted" data-i18n="busy_hours">Jam Sibuk</h3>
+                <canvas id="hourChart" height="140"></canvas>
+            </div>
+            <div class="card p-5 space-y-3 shadow-sm">
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-muted" data-i18n="top_products">3 Produk Terlaris</h3>
+                <div id="top-products" class="space-y-2"></div>
+            </div>
+        </section>
+
+        <!-- POS -->
+        <section id="tab-pos" class="tab-content space-y-4">
+            <div class="sticky top-0 pb-2 z-20 space-y-3" style="background:var(--bg);">
+                <div class="relative">
+                    <input type="text" id="pos-search" oninput="renderPos()" data-i18n-placeholder="pos_search_placeholder" placeholder="Cari barang atau scan..." class="w-full p-4 pl-11 card rounded-2xl outline-none text-sm">
+                    <i class="fa-solid fa-search absolute left-4 top-4 text-sm" style="color:var(--text-muted)"></i>
+                </div>
+                <div id="pos-category-chips" class="flex gap-2 overflow-x-auto hide-scrollbar pb-1"></div>
+            </div>
+            <div id="pos-grid" class="grid grid-cols-2 gap-3 pb-10"></div>
+        </section>
+
+        <!-- ITEMS -->
+        <section id="tab-items" class="tab-content space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="page-title" data-i18n="nav_inventory">Inventaris</h2>
+                <div class="flex gap-2">
+                    <button onclick="openCategoryModal()" class="px-3 py-2 rounded-xl font-bold text-[10px] uppercase shadow-sm surface text-indigo-500" data-i18n="btn_category">Kategori</button>
+                    <button onclick="openProductModal()" class="px-4 py-2 premium-gradient text-white rounded-xl font-bold text-[10px] uppercase shadow-lg" data-i18n="btn_add">+ Tambah</button>
+                </div>
+            </div>
+            <div class="relative">
+                <input type="text" id="item-search" oninput="renderItems()" data-i18n-placeholder="item_search_placeholder" placeholder="Cari barang atau barcode..." class="w-full p-4 pl-11 card rounded-2xl outline-none text-sm">
+                <i class="fa-solid fa-search absolute left-4 top-4 text-sm" style="color:var(--text-muted)"></i>
+            </div>
+            <div id="item-list" class="space-y-3"></div>
+        </section>
+
+        <!-- STOCK -->
+        <section id="tab-stock" class="tab-content space-y-5">
+            <div class="flex justify-between items-center">
+                <h2 class="page-title" data-i18n="nav_stock">Manajemen Stok</h2>
+                <div id="stock-alert-badge" class="hidden bg-red-50 text-red-500 px-3 py-1 rounded-lg text-[10px] font-black"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="openStockModal('in')" class="flex flex-col items-center gap-2 p-4 rounded-2xl active:scale-95 transition-all card">
+                    <div class="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-sm"><i class="fa-solid fa-arrow-down text-sm"></i></div>
+                    <span class="text-[9px] font-black text-emerald-500 uppercase" data-i18n="stock_in">Stok Masuk</span>
+                </button>
+                <button onclick="openStockModal('out')" class="flex flex-col items-center gap-2 p-4 rounded-2xl active:scale-95 transition-all card">
+                    <div class="w-10 h-10 bg-rose-500 text-white rounded-xl flex items-center justify-center shadow-sm"><i class="fa-solid fa-arrow-up text-sm"></i></div>
+                    <span class="text-[9px] font-black text-rose-500 uppercase" data-i18n="stock_out">Stok Keluar</span>
+                </button>
+                <button onclick="openOpnameModal()" class="flex flex-col items-center gap-2 p-4 rounded-2xl active:scale-95 transition-all card">
+                    <div class="w-10 h-10 bg-indigo-500 text-white rounded-xl flex items-center justify-center shadow-sm"><i class="fa-solid fa-clipboard-check text-sm"></i></div>
+                    <span class="text-[9px] font-black text-indigo-500 uppercase" data-i18n="stock_opname">Opname</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="card p-4 text-center shadow-sm">
+                    <p class="text-[9px] font-black uppercase mb-1 text-muted" data-i18n="stat_products">Produk</p>
+                    <p class="text-2xl font-black text-indigo-600" id="stat-total-products">0</p>
+                </div>
+                <div class="card p-4 text-center shadow-sm">
+                    <p class="text-[9px] font-black text-amber-500 uppercase mb-1" data-i18n="stat_low">Menipis</p>
+                    <p class="text-2xl font-black text-amber-500" id="stat-low-stock">0</p>
+                </div>
+                <div class="card p-4 text-center shadow-sm">
+                    <p class="text-[9px] font-black text-red-500 uppercase mb-1" data-i18n="stat_empty">Habis</p>
+                    <p class="text-2xl font-black text-red-500" id="stat-empty-stock">0</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-muted" data-i18n="product_status">Status Produk</h3>
+                <select id="stock-filter" onchange="renderStockList()" class="text-[9px] font-black uppercase rounded-xl px-3 py-2 outline-none surface border-0">
+                    <option value="all" data-i18n="filter_all">Semua</option>
+                    <option value="critical" data-i18n="stat_empty">Habis</option>
+                    <option value="low" data-i18n="stat_low">Menipis</option>
+                    <option value="ok" data-i18n="filter_ok">Aman</option>
+                </select>
+            </div>
+            <div id="stock-product-list" class="space-y-3"></div>
+            <div class="flex items-center justify-between mt-4">
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-muted" data-i18n="stock_history">Riwayat Stok</h3>
+                <button onclick="clearStockHistory()" class="text-[9px] font-black text-red-400 uppercase" data-i18n="btn_delete">Hapus</button>
+            </div>
+            <div id="stock-history-list" class="space-y-2"></div>
+        </section>
+
+        <!-- DEBTS -->
+        <section id="tab-debts" class="tab-content space-y-5">
+            <div class="flex justify-between items-center">
+                <h2 class="page-title" data-i18n="nav_debts">Buku Hutang</h2>
+                <div class="bg-rose-50 text-rose-500 px-3 py-1 rounded-lg text-[10px] font-black" id="debt-count-label">0 ORANG</div>
+            </div>
+            <div id="debt-list" class="space-y-3"></div>
+        </section>
+
+        <!-- DATA -->
+        <section id="tab-data" class="tab-content space-y-5">
+            <div class="flex justify-between items-center">
+                <h2 class="page-title" data-i18n="nav_reports">Laporan</h2>
+                <input type="date" id="date-filter" onchange="renderData()" class="card px-3 py-2 text-[10px] font-bold outline-none rounded-xl">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="exportExcel()" class="py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg"><i class="fa-solid fa-file-excel mr-2"></i> Excel</button>
+                <button onclick="exportPDF()" class="py-4 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-lg"><i class="fa-solid fa-file-pdf mr-2"></i> PDF</button>
+            </div>
+            <div id="export-info" class="text-[9px] font-bold uppercase text-center text-muted"></div>
+            <div id="data-list" class="space-y-3"></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="tab-settings" class="tab-content space-y-5">
+            <div class="flex items-center gap-4 card p-5 shadow-sm">
+                <div id="profile-logo-preview" class="w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-white shadow-lg overflow-hidden" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
+                    <span class="text-xl font-black text-white">A</span>
+                </div>
+                <div>
+                    <h2 class="font-black text-base" id="profile-name">Admin Toko</h2>
+                    <p class="text-xs text-muted" id="profile-address-display">-</p>
+                    <span class="text-[9px] font-black text-indigo-500 uppercase">DheKasir v1.4</span>
+                </div>
+            </div>
+            <div class="card p-2 space-y-1">
+                <p class="dk-section-label" data-i18n="settings_store_config">Konfigurasi Toko</p>
+                <div onclick="openStoreSettings()" class="settings-row">
+                    <div class="flex items-center gap-3">
+                        <div class="settings-icon text-indigo-500"><i class="fa-solid fa-store text-sm"></i></div>
+                        <span class="text-sm font-bold" data-i18n="settings_store">Setelan Toko</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                </div>
+                <div onclick="openMinStockSettings()" class="settings-row">
+                    <div class="flex items-center gap-3">
+                        <div class="settings-icon text-amber-500"><i class="fa-solid fa-triangle-exclamation text-sm"></i></div>
+                        <span class="text-sm font-bold" data-i18n="settings_min_stock">Batas Minimum Stok</span>
+                    </div>
+                    <span id="min-stock-display" class="text-[10px] font-black text-muted">5</span>
+                </div>
+                <div onclick="openPrinterModal()" class="settings-row">
+                    <div class="flex items-center gap-3">
+                        <div class="settings-icon" id="printer-icon-wrap" style="color:var(--text-muted)">
+                            <i class="fa-solid fa-print text-sm"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm font-bold block" data-i18n="settings_printer">Printer Thermal</span>
+                            <span id="printer-device-name" class="text-[9px] text-muted font-semibold" data-i18n="printer_not_connected">Belum terhubung</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="printer-status" class="text-[8px] font-black printer-offline uppercase">OFFLINE</span>
+                        <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                    </div>
+                </div>
+                <div onclick="openLanguageModal()" class="settings-row">
+                    <div class="flex items-center gap-3">
+                        <div class="settings-icon text-indigo-500"><i class="fa-solid fa-globe text-sm"></i></div>
+                        <div>
+                            <span class="text-sm font-bold block" data-i18n="settings_language">Bahasa / Language</span>
+                            <span id="current-lang-display" class="text-[9px] text-muted font-semibold">Bahasa Indonesia</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                </div>
+                <p class="dk-section-label" data-i18n="settings_info">Informasi</p>
+                <div onclick="openModal('modal-about')" class="settings-row">
+                    <div class="flex items-center gap-3">
+                        <div class="settings-icon text-indigo-500"><i class="fa-solid fa-circle-info text-sm"></i></div>
+                        <span class="text-sm font-bold" data-i18n="nav_about">Tentang Aplikasi</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                </div>
+                <div onclick="openModal('modal-contact')" class="settings-row">
+                    <div class="flex items-center gap-3">
+                        <div class="settings-icon text-indigo-500"><i class="fa-solid fa-headset text-sm"></i></div>
+                        <span class="text-sm font-bold" data-i18n="settings_contact">Hubungi Kami</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                </div>
+                <div onclick="openModal('modal-privacy')" class="settings-row" style="border-bottom:none">
+                    <div class="flex items-center gap-3">
+                        <div class="settings-icon text-indigo-500"><i class="fa-solid fa-shield-halved text-sm"></i></div>
+                        <span class="text-sm font-bold" data-i18n="settings_privacy">Privasi & Kebijakan</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- BOTTOM NAV: 5 items, center = scan FAB, no hutang tab -->
+    <nav id="bottom-nav">
+        <div class="nav-item active" id="n-home" onclick="switchTab('home')">
+            <i class="fa-solid fa-house"></i>
+            <span data-i18n="nav_home_short">Home</span>
+            <div class="nav-item-pill"></div>
+        </div>
+        <div class="nav-item" id="n-pos" onclick="switchTab('pos')">
+            <i class="fa-solid fa-cash-register"></i>
+            <span data-i18n="nav_pos_short">Kasir</span>
+            <div class="nav-item-pill"></div>
+        </div>
+
+        <!-- Center FAB: Scan Barcode -->
+        <div class="nav-scan-fab" onclick="openScanner('cart')" aria-label="Scan Barcode">
+            <div class="nav-scan-fab-btn">
+                <i class="fa-solid fa-barcode"></i>
+            </div>
+            <span class="nav-scan-fab-label">Scan</span>
+        </div>
+
+        <div class="nav-item" id="n-stock" onclick="switchTab('stock')" style="position:relative;">
+            <i class="fa-solid fa-warehouse"></i>
+            <span data-i18n="nav_warehouse_short">Gudang</span>
+            <div class="nav-item-pill"></div>
+            <span id="nav-stock-dot" class="nav-dot hidden"></span>
+        </div>
+        <div class="nav-item" id="n-data" onclick="switchTab('data')">
+            <i class="fa-solid fa-chart-bar"></i>
+            <span data-i18n="nav_data_short">Data</span>
+            <div class="nav-item-pill"></div>
+        </div>
+    </nav>
+
+    <div id="cart-float" class="hidden fixed bottom-28 left-4 right-4 max-w-[440px] mx-auto p-5 rounded-[28px] border shadow-2xl z-40 animate-pop">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="openCartDetails()">
+                <div id="cart-count" class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-xs">0</div>
+                <div>
+                    <p id="cart-total" class="text-xl font-black">Rp 0</p>
+                    <p class="text-[8px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1"><span data-i18n="view_detail">Lihat Detail</span> <i class="fa-solid fa-chevron-up"></i></p>
+                </div>
+            </div>
+            <button onclick="resetCart()" class="text-rose-500 p-2 w-9 h-9 rounded-xl surface flex items-center justify-center"><i class="fa-solid fa-trash-can text-sm"></i></button>
+        </div>
+        <button onclick="openCheckout()" class="w-full py-4 premium-gradient text-white rounded-2xl font-black text-xs uppercase shadow-lg active:scale-95 transition-all" data-i18n="btn_checkout">Lanjutkan Pembayaran →</button>
+    </div>
+
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900/90 text-white text-[10px] font-bold rounded-full opacity-0 transition-all pointer-events-none z-[200] uppercase shadow-2xl"></div>
+</div>
+
+<!-- ═══════════════════ MODALS ═══════════════════ -->
+
+<!-- LANGUAGE MODAL -->
+<div id="modal-language" class="fixed inset-0 z-[160] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl space-y-4">
+        <h3 class="font-black text-lg" data-i18n="lang_select_title">Pilih Bahasa</h3>
+        <p class="text-xs text-muted" data-i18n="lang_select_desc">Pilih bahasa tampilan aplikasi</p>
+        <div id="lang-list">
+            <div class="lang-option" id="lang-id" onclick="setLanguage('id')">
+                <span class="lang-flag">🇮🇩</span>
+                <div>
+                    <div class="lang-name">Bahasa Indonesia</div>
+                    <div class="lang-native">Indonesia</div>
+                </div>
+                <i class="fa-solid fa-check lang-check"></i>
+            </div>
+            <div class="lang-option" id="lang-en" onclick="setLanguage('en')">
+                <span class="lang-flag">🇬🇧</span>
+                <div>
+                    <div class="lang-name">English</div>
+                    <div class="lang-native">English (United Kingdom)</div>
+                </div>
+                <i class="fa-solid fa-check lang-check"></i>
+            </div>
+            <div class="lang-option" id="lang-ms" onclick="setLanguage('ms')">
+                <span class="lang-flag">🇲🇾</span>
+                <div>
+                    <div class="lang-name">Bahasa Melayu</div>
+                    <div class="lang-native">Malaysia</div>
+                </div>
+                <i class="fa-solid fa-check lang-check"></i>
+            </div>
+        </div>
+        <button onclick="closeModal('modal-language')" class="w-full py-4 rounded-2xl text-xs uppercase font-black text-indigo-500 surface" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<div id="modal-scanner" class="fixed inset-0 z-[150] bg-black hidden flex flex-col items-center justify-center p-6">
+    <button onclick="closeScanner()" class="absolute top-8 right-6 text-white text-3xl"><i class="fa-solid fa-circle-xmark"></i></button>
+    <div class="w-full max-w-sm"><div id="reader"></div></div>
+    <div id="scan-feedback" class="mt-6 p-4 bg-white/10 rounded-2xl text-white font-bold hidden animate-pop text-center"></div>
+    <div class="mt-6 flex flex-col items-center gap-3">
+        <button id="flash-btn" onclick="toggleFlash()" disabled>
+            <i class="fa-solid fa-bolt flash-icon"></i>
+            <span class="flash-label" data-i18n="flash">Flash</span>
+        </button>
+    </div>
+    <p class="text-white/40 text-[10px] font-bold mt-4 tracking-widest uppercase text-center" data-i18n="scanner_hint">Auto-detect Aktif • Jeda 2.5 Detik per Produk</p>
+</div>
+
+<div id="modal-notif" class="fixed inset-0 z-[120] bg-slate-900/40 hidden backdrop-blur-sm flex items-end justify-center">
+    <div class="modal-sheet w-full max-w-md rounded-t-[40px] p-7 pb-10 animate-pop shadow-2xl max-h-[80vh] flex flex-col">
+        <div class="w-10 h-1.5 rounded-full mx-auto mb-5" style="background:var(--card-border)"></div>
+        <div class="flex justify-between items-center mb-5">
+            <h3 class="text-lg font-black uppercase tracking-widest" data-i18n="notif_stock_title">Notifikasi Stok</h3>
+            <button onclick="closeModal('modal-notif')" class="font-bold text-[10px] uppercase text-muted" data-i18n="btn_close">Tutup</button>
+        </div>
+        <div id="notif-list" class="flex-1 overflow-y-auto space-y-3 hide-scrollbar"></div>
+    </div>
+</div>
+
+<div id="modal-printer" class="fixed inset-0 z-[160] bg-slate-900/60 hidden backdrop-blur-sm flex items-end justify-center">
+    <div class="modal-sheet w-full max-w-md rounded-t-[40px] p-7 pb-10 animate-pop shadow-2xl space-y-5">
+        <div class="w-10 h-1.5 rounded-full mx-auto" style="background:var(--card-border)"></div>
+        <div class="printer-card overflow-hidden">
+            <div id="printer-modal-bar" class="printer-status-bar offline"></div>
+            <div class="p-4 flex items-center gap-4">
+                <div id="printer-modal-icon" class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg shrink-0" style="background:var(--surface);color:var(--text-muted);">
+                    <i class="fa-solid fa-print"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-black" id="printer-modal-name" data-i18n="settings_printer">Printer Thermal</p>
+                    <p class="text-[10px] font-semibold text-muted" id="printer-modal-desc" data-i18n="printer_no_device">Belum ada perangkat terhubung</p>
+                    <p class="text-[9px] font-black uppercase mt-1" id="printer-modal-status-text" style="color:var(--text-muted);">OFFLINE</p>
+                </div>
+                <div id="printer-signal" class="hidden flex items-end gap-0.5 shrink-0">
+                    <div class="w-1.5 rounded-sm bg-emerald-400" style="height:6px"></div>
+                    <div class="w-1.5 rounded-sm bg-emerald-400" style="height:10px"></div>
+                    <div class="w-1.5 rounded-sm bg-emerald-400" style="height:14px"></div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center justify-between p-4 rounded-2xl surface">
+            <div>
+                <p class="text-xs font-black" data-i18n="printer_auto_reconnect">Auto-Reconnect</p>
+                <p class="text-[9px] text-muted" data-i18n="printer_auto_reconnect_desc">Sambung otomatis saat halaman dibuka</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="printer-auto-reconnect" onchange="savePrinterPrefs()">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div id="printer-btn-connect" class="w-full py-4 premium-gradient text-white rounded-2xl font-black text-xs uppercase shadow-xl text-center cursor-pointer active:scale-95 transition-all" onclick="btConnect()" data-i18n="printer_connect">
+            <i class="fa-brands fa-bluetooth mr-2"></i> Hubungkan Printer
+        </div>
+        <div id="printer-btn-reconnect" class="hidden w-full py-4 bg-amber-500 text-white rounded-2xl font-black text-xs uppercase shadow-xl text-center cursor-pointer active:scale-95 transition-all" onclick="btReconnect()" data-i18n="printer_reconnect">
+            <i class="fa-solid fa-rotate mr-2"></i> Sambung Ulang
+        </div>
+        <div id="printer-btn-actions" class="hidden grid grid-cols-2 gap-3">
+            <button onclick="btTestPrint()" class="py-4 bg-emerald-600 text-white rounded-2xl font-bold text-[10px] uppercase shadow-lg active:scale-95 transition-all" data-i18n="printer_test">
+                <i class="fa-solid fa-file-lines mr-1"></i> Test Print
+            </button>
+            <button onclick="btDisconnect()" class="py-4 bg-rose-50 text-rose-600 rounded-2xl font-bold text-[10px] uppercase shadow-sm active:scale-95 transition-all border border-rose-200" data-i18n="printer_disconnect">
+                <i class="fa-solid fa-link-slash mr-1"></i> Putuskan
+            </button>
+        </div>
+        <div class="p-4 rounded-2xl surface text-[9px] text-muted leading-relaxed" data-i18n="printer_tip">
+            <strong class="text-indigo-500">Tip:</strong> Aktifkan Bluetooth di HP, nyalakan printer, lalu tekan <strong>Hubungkan Printer</strong>.
+        </div>
+        <button onclick="closeModal('modal-printer')" class="w-full py-2 font-bold text-[10px] uppercase text-center text-muted" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<div id="modal-stock-move" class="fixed inset-0 z-[130] bg-slate-900/40 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl space-y-4">
+        <h3 class="text-xl font-black" id="stock-move-title">Stok Masuk</h3>
+        <div class="space-y-3">
+            <div class="space-y-1">
+                <label class="text-[8px] font-black uppercase ml-2 text-muted" data-i18n="label_select_product">Pilih Produk</label>
+                <select id="sm-product" class="w-full p-4 border rounded-2xl text-sm outline-none"></select>
+            </div>
+            <div class="space-y-1">
+                <label class="text-[8px] font-black uppercase ml-2 text-muted" data-i18n="label_qty">Jumlah</label>
+                <input type="number" id="sm-qty" placeholder="0" min="1" class="w-full p-4 border rounded-2xl text-sm font-bold outline-none">
+            </div>
+            <div class="space-y-1">
+                <label class="text-[8px] font-black uppercase ml-2 text-muted" data-i18n="label_note_optional">Keterangan (opsional)</label>
+                <input type="text" id="sm-note" data-i18n-placeholder="note_placeholder" placeholder="Restock dari supplier..." class="w-full p-4 border rounded-2xl text-sm outline-none">
+            </div>
+        </div>
+        <div class="rounded-2xl p-4 flex justify-between items-center surface">
+            <span class="text-[10px] font-black uppercase text-muted" data-i18n="current_stock">Stok Saat Ini</span>
+            <span class="text-lg font-black text-indigo-600" id="sm-current-stock">-</span>
+        </div>
+        <button id="sm-btn" onclick="submitStockMove()" class="w-full py-4 premium-gradient text-white rounded-2xl font-black text-xs uppercase shadow-xl" data-i18n="btn_save">Simpan</button>
+        <button onclick="closeModal('modal-stock-move')" class="w-full font-bold py-2 text-[10px] uppercase text-center text-muted" data-i18n="btn_cancel">Batal</button>
+    </div>
+</div>
+
+<div id="modal-opname" class="fixed inset-0 z-[130] bg-slate-900/40 hidden backdrop-blur-sm flex items-end justify-center">
+    <div class="modal-sheet w-full max-w-md rounded-t-[40px] p-7 pb-10 animate-pop shadow-2xl max-h-[90vh] flex flex-col">
+        <div class="w-10 h-1.5 rounded-full mx-auto mb-5" style="background:var(--card-border)"></div>
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-black uppercase tracking-widest" data-i18n="stock_opname">Stok Opname</h3>
+            <button onclick="closeModal('modal-opname')" class="font-bold text-[10px] uppercase text-muted" data-i18n="btn_cancel">Batal</button>
+        </div>
+        <p class="text-xs mb-5 text-muted" data-i18n="opname_desc">Masukkan jumlah stok fisik yang dihitung. Sistem akan menyesuaikan secara otomatis.</p>
+        <div id="opname-list" class="flex-1 overflow-y-auto space-y-3 hide-scrollbar mb-5"></div>
+        <button onclick="submitOpname()" class="w-full py-5 premium-gradient text-white rounded-2xl font-black text-xs uppercase shadow-xl" data-i18n="btn_save_opname">Simpan Opname</button>
+    </div>
+</div>
+
+<div id="modal-minstock" class="fixed inset-0 z-[160] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl space-y-5">
+        <h3 class="font-black text-lg" data-i18n="settings_min_stock">Batas Minimum Stok</h3>
+        <p class="text-xs text-muted" data-i18n="minstock_desc">Produk dengan stok di bawah batas ini akan masuk kategori "Menipis" dan memicu notifikasi.</p>
+        <div class="space-y-2">
+            <label class="text-[8px] font-black uppercase ml-2 text-muted" data-i18n="minstock_label">Batas Minimum (unit)</label>
+            <input type="number" id="min-stock-input" min="1" class="w-full p-5 border-2 border-indigo-400 rounded-2xl text-2xl font-black text-indigo-600 text-center outline-none" style="background:var(--input-bg)">
+        </div>
+        <button onclick="saveMinStock()" class="w-full py-4 premium-gradient text-white rounded-2xl font-black text-xs uppercase shadow-xl" data-i18n="btn_save">Simpan</button>
+        <button onclick="closeModal('modal-minstock')" class="w-full py-2 font-bold text-[10px] uppercase text-center text-muted" data-i18n="btn_cancel">Batal</button>
+    </div>
+</div>
+
+<div id="modal-cart-details" class="fixed inset-0 z-[100] bg-slate-900/40 hidden backdrop-blur-sm flex items-end justify-center">
+    <div class="modal-sheet w-full max-w-md rounded-t-[40px] p-7 pb-10 animate-pop shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="w-10 h-1.5 rounded-full mx-auto mb-5" style="background:var(--card-border)"></div>
+        <h3 class="text-xl font-black mb-5 text-center uppercase tracking-widest" data-i18n="cart_detail_title">Detail Keranjang</h3>
+        <div id="cart-items-list" class="flex-1 overflow-y-auto space-y-3 pr-1 mb-5"></div>
+        <div class="flex justify-between font-black text-xl border-t pt-5 mt-2 dk-divider"><span data-i18n="total">TOTAL</span><span id="cart-detail-total" class="text-indigo-600">Rp 0</span></div>
+        <button onclick="closeModal('modal-cart-details')" class="w-full py-4 mt-5 rounded-2xl text-xs uppercase font-black text-indigo-600 surface" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<div id="modal-checkout" class="fixed inset-0 z-[100] bg-slate-900/40 hidden backdrop-blur-sm flex items-end justify-center">
+    <div class="modal-sheet w-full max-w-md rounded-t-[40px] p-7 pb-10 animate-pop shadow-2xl">
+        <div class="w-10 h-1.5 rounded-full mx-auto mb-5" style="background:var(--card-border)"></div>
+        <h3 class="text-xl font-black mb-5 text-center uppercase tracking-widest" data-i18n="checkout_title">Konfirmasi Bayar</h3>
+        <div class="space-y-4">
+            <div class="flex justify-between font-black text-2xl border-b pb-4 dk-divider"><span data-i18n="total">TOTAL</span><span id="co-grandtotal">Rp 0</span></div>
+            <div class="grid grid-cols-2 gap-2 rounded-2xl p-1 surface">
+                <button onclick="setPayMethod('cash')" id="m-cash" class="py-3 rounded-xl font-black text-[10px] uppercase" style="background:var(--card);color:#4f46e5;box-shadow:0 1px 3px rgba(0,0,0,0.1)" data-i18n="pay_cash_qris">Tunai/QRIS</button>
+                <button onclick="setPayMethod('debt')" id="m-debt" class="py-3 rounded-xl font-black text-[10px] uppercase text-muted" data-i18n="pay_debt">Hutang (Bon)</button>
+            </div>
+            <div id="pay-cash-area" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-black uppercase ml-2 text-muted" data-i18n="label_cash">Uang Tunai</label>
+                        <input type="number" id="pay-amt-cash" oninput="calcChange()" class="w-full p-4 text-emerald-600 font-black rounded-2xl outline-none border">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[8px] font-black uppercase ml-2 text-muted" data-i18n="label_transfer">Transfer/QRIS</label>
+                        <input type="number" id="pay-amt-qris" oninput="calcChange()" class="w-full p-4 text-indigo-600 font-black rounded-2xl outline-none border">
+                    </div>
+                </div>
+                <div class="flex justify-between items-center px-5 py-4 rounded-2xl surface"><span class="text-xs font-bold uppercase text-muted" data-i18n="change">Kembalian</span><span id="pay-change" class="text-xl font-black">Rp 0</span></div>
+            </div>
+            <div id="pay-debt-area" class="hidden space-y-4">
+                <input type="text" id="debt-customer" data-i18n-placeholder="customer_name_placeholder" placeholder="Nama Pelanggan" class="w-full p-4 text-rose-600 font-bold rounded-2xl outline-none border border-rose-300" style="background:var(--input-bg)">
+                <div class="flex items-center gap-3 px-4">
+                    <label class="text-[9px] font-black uppercase w-24 text-muted" data-i18n="due_date">Jatuh Tempo</label>
+                    <input type="date" id="debt-due" class="flex-1 p-3 rounded-xl text-xs outline-none border">
+                </div>
+            </div>
+            <button onclick="finishCheckout()" class="w-full py-5 premium-gradient text-white rounded-[28px] font-black text-sm uppercase shadow-xl active:scale-95 transition-all" data-i18n="btn_finish_checkout">Selesaikan Transaksi</button>
+            <button onclick="closeModal('modal-checkout')" class="w-full py-2 font-bold text-[10px] uppercase text-center text-muted" data-i18n="btn_cancel">Batal</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-receipt" class="fixed inset-0 z-[130] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-xs rounded-[36px] overflow-hidden animate-pop shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100 shrink-0">
+            <h4 class="font-black text-sm uppercase tracking-widest text-slate-700" data-i18n="receipt_title">Struk Belanja</h4>
+            <span class="text-[8px] font-black text-slate-400 uppercase bg-slate-100 px-2 py-1 rounded-lg">Preview</span>
+        </div>
+        <div class="flex-1 overflow-y-auto hide-scrollbar px-4 py-4 bg-slate-50">
+            <div id="receipt-area" class="receipt-paper bg-white rounded-2xl shadow-sm p-5">
+                <div class="rec-header">
+                    <div class="rec-logo" id="rec-logo-box"></div>
+                    <h4 class="rec-storename" id="rec-store-name">-</h4>
+                    <p class="rec-addr" id="rec-store-addr"></p>
+                    <p class="rec-phone" id="rec-store-phone"></p>
+                    <p class="rec-meta" id="rec-date">-</p>
+                    <p class="rec-meta" style="margin-top:2px;font-size:8px;letter-spacing:0.06em;" id="rec-id">-</p>
+                </div>
+                <p class="rec-section-title" id="rec-items-title">ITEM PEMBELIAN</p>
+                <div id="rec-items"></div>
+                <hr class="rec-divider">
+                <div class="rec-total-row"><span id="rec-total-label">TOTAL</span><span id="rec-total">Rp 0</span></div>
+                <div id="rec-payment-details"></div>
+                <div class="rec-change-row"><span id="rec-change-label">Kembalian</span><span id="rec-change">Rp 0</span></div>
+                <div class="rec-footer" id="rec-footer"></div>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-slate-100 space-y-2 shrink-0 bg-white">
+            <button onclick="printBluetoothReceipt()" class="w-full py-3.5 bg-slate-900 text-white rounded-2xl font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-2">
+                <i class="fa-solid fa-print"></i>
+                <span id="print-btn-label" data-i18n="print_bluetooth">Print Bluetooth</span>
+                <span id="print-bt-status" class="ml-1 text-[8px] opacity-60"></span>
+            </button>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="shareWhatsApp()" class="py-3 bg-emerald-500 text-white rounded-2xl font-bold text-[10px] uppercase flex items-center justify-center gap-1"><i class="fa-brands fa-whatsapp"></i> WA</button>
+                <button onclick="closeModal('modal-receipt')" class="py-3 bg-slate-100 text-slate-500 rounded-2xl font-bold text-[10px] uppercase" data-i18n="btn_close">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-debt-detail" class="fixed inset-0 z-[80] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl">
+        <h3 class="text-lg font-black" id="det-debt-name">-</h3>
+        <p class="text-[10px] mb-4 font-bold text-muted" id="det-debt-id">-</p>
+        <div class="space-y-2 mb-5">
+            <div class="flex justify-between text-xs"><span data-i18n="debt_total_loan">Total Pinjaman</span><span id="det-debt-total" class="font-bold"></span></div>
+            <div class="flex justify-between text-xs text-emerald-600 font-bold"><span data-i18n="debt_paid">Terbayar</span><span id="det-debt-paid"></span></div>
+            <div class="flex justify-between text-sm font-black border-t pt-2 dk-divider"><span data-i18n="debt_remaining">SISA</span><span id="det-debt-rem" class="text-rose-500"></span></div>
+        </div>
+        <div class="space-y-3 mb-5">
+            <input type="number" id="ins-amt" data-i18n-placeholder="installment_placeholder" placeholder="Nominal Cicilan" class="w-full p-4 rounded-2xl text-sm font-bold outline-none border">
+            <button onclick="payInstallment()" class="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold text-xs uppercase shadow-lg" data-i18n="btn_pay_installment">Bayar Cicilan</button>
+        </div>
+        <button onclick="closeModal('modal-debt-detail')" class="w-full font-bold text-[10px] uppercase text-muted" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<div id="modal-product" class="fixed inset-0 z-[120] bg-slate-900/40 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop overflow-y-auto max-h-[85vh] shadow-2xl">
+        <h3 class="text-xl font-black mb-5" data-i18n="product_master">Master Produk</h3>
+        <input type="hidden" id="p-id">
+        <div class="space-y-4">
+            <div class="flex gap-2">
+                <input type="text" id="p-barcode" placeholder="Barcode SKU" class="flex-1 p-4 border rounded-2xl text-sm font-bold text-indigo-500 outline-none">
+                <button onclick="openScanner('sku')" class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm active:scale-95 transition-all text-indigo-500 border" style="background:var(--surface);border-color:var(--card-border)"><i class="fa-solid fa-camera"></i></button>
+            </div>
+            <input type="text" id="p-name" data-i18n-placeholder="product_name_placeholder" placeholder="Nama Produk" class="w-full p-4 border rounded-2xl text-sm font-bold outline-none">
+            <div class="space-y-1">
+                <label class="text-[8px] font-bold uppercase ml-2 text-muted" data-i18n="label_category">Kategori</label>
+                <select id="p-category" class="w-full p-4 border rounded-2xl text-sm outline-none"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="text-[8px] font-bold uppercase ml-2 text-muted" data-i18n="label_cost">Modal</label><input type="number" id="p-cost" class="w-full p-4 border rounded-2xl text-sm"></div>
+                <div><label class="text-[8px] font-bold uppercase ml-2 text-muted" data-i18n="label_price">Jual</label><input type="number" id="p-price" class="w-full p-4 border rounded-2xl text-sm font-bold text-indigo-500"></div>
+            </div>
+            <input type="number" id="p-stock" data-i18n-placeholder="stock_placeholder" placeholder="Stok" class="w-full p-4 border rounded-2xl text-sm outline-none">
+            <button onclick="saveProduct()" class="w-full py-4 premium-gradient text-white rounded-2xl font-black text-xs uppercase shadow-xl" data-i18n="btn_save_data">Simpan Data</button>
+            <button onclick="closeModal('modal-product')" class="w-full font-bold py-2 text-[10px] uppercase text-center text-muted" data-i18n="btn_cancel">Batal</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-category" class="fixed inset-0 z-[150] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl space-y-4">
+        <h3 class="font-black text-lg" data-i18n="manage_category">Kelola Kategori</h3>
+        <div class="flex gap-2">
+            <input type="text" id="new-cat-name" data-i18n-placeholder="new_category_placeholder" placeholder="Kategori Baru" class="flex-1 p-4 rounded-2xl text-sm outline-none border">
+            <button onclick="addCategory()" class="w-12 h-12 premium-gradient text-white rounded-2xl flex items-center justify-center shadow-lg"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        <div id="category-list" class="space-y-2 max-h-60 overflow-y-auto hide-scrollbar py-2"></div>
+        <button onclick="closeModal('modal-category')" class="w-full py-4 font-bold text-[10px] uppercase text-center text-muted" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<div id="modal-store-cfg" class="fixed inset-0 z-[150] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto hide-scrollbar">
+        <h3 class="font-black text-lg" data-i18n="settings_store">Setelan Toko</h3>
+        <div class="flex flex-col items-center gap-3">
+            <div id="logo-preview-cfg" class="w-20 h-20 border rounded-2xl flex items-center justify-center overflow-hidden surface"><i class="fa-solid fa-image text-muted text-2xl"></i></div>
+            <input type="file" id="logo-input" class="hidden" accept="image/*" onchange="handleLogoUpload(this)">
+            <button onclick="document.getElementById('logo-input').click()" class="text-[10px] font-bold text-indigo-500 uppercase" data-i18n="btn_change_logo">Ganti Logo</button>
+        </div>
+        <input type="text" id="cfg-name" data-i18n-placeholder="store_name_placeholder" placeholder="Nama Toko" class="w-full p-4 rounded-2xl text-sm outline-none border">
+        <input type="text" id="cfg-address" data-i18n-placeholder="store_address_placeholder" placeholder="Alamat Toko" class="w-full p-4 rounded-2xl text-sm outline-none border">
+        <input type="text" id="cfg-phone" placeholder="WhatsApp (62...)" class="w-full p-4 rounded-2xl text-sm outline-none border">
+        <input type="text" id="cfg-url" placeholder="Google Script URL" class="w-full p-4 rounded-2xl text-[10px] outline-none border">
+        <button onclick="saveSettings()" class="w-full py-4 premium-gradient text-white rounded-2xl font-black text-xs uppercase shadow-xl" data-i18n="btn_save_config">Simpan Konfigurasi</button>
+        <button onclick="closeModal('modal-store-cfg')" class="w-full py-2 font-bold text-[10px] uppercase text-center text-muted" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<div id="modal-about" class="fixed inset-0 z-[160] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-9 animate-pop shadow-2xl text-center">
+        <div class="w-20 h-20 bg-indigo-600 rounded-3xl mx-auto flex items-center justify-center text-white text-3xl font-black mb-5 shadow-xl">D</div>
+        <h3 class="font-black text-xl mb-1">DheKasir</h3>
+        <p class="text-[10px] mb-5 font-bold uppercase tracking-widest text-muted">Version 1.4</p>
+        <div class="text-[11px] leading-relaxed mb-7 space-y-3 text-left text-muted" id="about-text">
+            <p><strong class="text-indigo-500">DheKasir</strong> adalah ekosistem kasir retail digital modern yang dirancang khusus untuk mempercepat transformasi digital UMKM di Indonesia.</p>
+            <p>Fitur baru v1.4: Fix Bluetooth Print, Audio Feedback, Multi-Bahasa (Indonesia, Inggris, Melayu).</p>
+        </div>
+        <button onclick="closeModal('modal-about')" class="w-full py-4 rounded-2xl text-xs uppercase font-black text-indigo-500 surface" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<div id="modal-privacy" class="fixed inset-0 z-[160] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl flex flex-col max-h-[85vh]">
+        <h3 class="font-black text-lg mb-4 text-center" data-i18n="privacy_title">Kebijakan Privasi</h3>
+        <div class="flex-1 overflow-y-auto pr-2 text-[11px] leading-relaxed space-y-4 text-justify text-muted">
+            <p>Semua data transaksi, inventaris, dan pengaturan toko Anda disimpan secara utama di dalam memori internal perangkat Anda (LocalStorage).</p>
+            <p>Fitur sinkronisasi ke Google Spreadsheet hanya dikirim ke URL backend yang Anda tentukan sendiri.</p>
+            <p>Akses kamera hanya digunakan secara instan untuk memindai kode produk. Tidak ada foto atau rekaman yang disimpan.</p>
+        </div>
+        <button onclick="closeModal('modal-privacy')" class="w-full py-4 mt-5 rounded-2xl text-xs uppercase font-black text-indigo-500 surface" data-i18n="btn_agree">Saya Setuju</button>
+    </div>
+</div>
+
+<div id="modal-contact" class="fixed inset-0 z-[160] bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center p-6">
+    <div class="modal-sheet w-full max-w-sm rounded-[36px] p-7 animate-pop shadow-2xl">
+        <h3 class="font-black text-lg mb-5 text-center" data-i18n="settings_contact">Hubungi Kami</h3>
+        <div class="space-y-5 mb-7">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-indigo-500 shrink-0 surface"><i class="fa-solid fa-envelope"></i></div>
+                <div><p class="text-[9px] font-black uppercase text-muted">Email</p><p class="text-sm font-bold">support@dhekasir.app</p></div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-rose-500 shrink-0 surface"><i class="fa-solid fa-location-dot"></i></div>
+                <div><p class="text-[9px] font-black uppercase text-muted" data-i18n="contact_address">Alamat</p><p class="text-xs font-bold leading-relaxed">Jalan Babul Huda Sekeladi, Tanah Putih, Rohil, Riau.</p></div>
+            </div>
+        </div>
+        <button onclick="closeModal('modal-contact')" class="w-full py-4 rounded-2xl text-xs uppercase font-black text-indigo-500 surface" data-i18n="btn_close">Tutup</button>
+    </div>
+</div>
+
+<!-- ═══════════════════ SCRIPTS ═══════════════════ -->
+<script>
+// ══════════════════════════════
+// TRANSLATIONS
+// ══════════════════════════════
+const TRANSLATIONS = {
+    id: {
+        splash_tagline: 'Sistem Kasir Digital UMKM',
+        splash_loading: 'Memuat sistem...',
+        menu_main: 'Menu Utama',
+        menu_operational: 'Operasional',
+        menu_account: 'Akun',
+        nav_home: 'Beranda',
+        nav_pos: 'Kasir / POS',
+        nav_inventory: 'Inventaris',
+        nav_stock: 'Manajemen Stok',
+        nav_debts: 'Buku Hutang',
+        nav_reports: 'Laporan & Data',
+        nav_settings: 'Pengaturan',
+        nav_about: 'Tentang Aplikasi',
+        nav_home_short: 'Home',
+        nav_pos_short: 'Kasir',
+        nav_stock_short: 'Stok',
+        nav_warehouse_short: 'Gudang',
+        nav_debts_short: 'Hutang',
+        nav_data_short: 'Data',
+        dark_mode: 'Tema Gelap',
+        dash_net_profit: 'Profit Bersih Toko',
+        dash_today_income: 'Pemasukan Hari Ini',
+        dash_total_receivable: 'Total Piutang',
+        hide: 'Sembunyikan',
+        show: 'Tampilkan',
+        stock_status: 'Status Stok',
+        busy_hours: 'Jam Sibuk',
+        top_products: '3 Produk Terlaris',
+        items_low: 'Item Menipis',
+        no_data: 'Tidak Ada Data',
+        pos_search_placeholder: 'Cari barang atau scan...',
+        view_detail: 'Lihat Detail',
+        btn_checkout: 'Lanjutkan Pembayaran →',
+        btn_category: 'Kategori',
+        btn_add: '+ Tambah',
+        item_search_placeholder: 'Cari barang atau barcode...',
+        stock_in: 'Stok Masuk',
+        stock_out: 'Stok Keluar',
+        stock_opname: 'Stok Opname',
+        stat_products: 'Produk',
+        stat_low: 'Menipis',
+        stat_empty: 'Habis',
+        filter_all: 'Semua',
+        filter_ok: 'Aman',
+        product_status: 'Status Produk',
+        stock_history: 'Riwayat Stok',
+        btn_delete: 'Hapus',
+        label_select_product: 'Pilih Produk',
+        label_qty: 'Jumlah',
+        label_note_optional: 'Keterangan (opsional)',
+        note_placeholder: 'Restock dari supplier...',
+        current_stock: 'Stok Saat Ini',
+        opname_desc: 'Masukkan jumlah stok fisik yang dihitung. Sistem akan menyesuaikan secara otomatis.',
+        opname_physical: 'Stok Fisik',
+        opname_system: 'Sistem',
+        btn_save_opname: 'Simpan Opname',
+        settings_min_stock: 'Batas Minimum Stok',
+        minstock_desc: 'Produk dengan stok di bawah batas ini akan masuk kategori "Menipis" dan memicu notifikasi.',
+        minstock_label: 'Batas Minimum (unit)',
+        debt_total_loan: 'Total Pinjaman',
+        debt_paid: 'Terbayar',
+        debt_remaining: 'SISA',
+        debt_book_empty: 'Buku Hutang Kosong',
+        installment_placeholder: 'Nominal Cicilan',
+        btn_pay_installment: 'Bayar Cicilan',
+        deadline: 'Tempo',
+        checkout_title: 'Konfirmasi Bayar',
+        total: 'TOTAL',
+        pay_cash_qris: 'Tunai/QRIS',
+        pay_debt: 'Hutang (Bon)',
+        label_cash: 'Uang Tunai',
+        label_transfer: 'Transfer/QRIS',
+        change: 'Kembalian',
+        customer_name_placeholder: 'Nama Pelanggan',
+        due_date: 'Jatuh Tempo',
+        btn_finish_checkout: 'Selesaikan Transaksi',
+        cart_detail_title: 'Detail Keranjang',
+        receipt_title: 'Struk Belanja',
+        receipt_items: 'ITEM PEMBELIAN',
+        receipt_thank: 'Terima kasih atas kunjungan Anda!',
+        receipt_no_return: 'Barang yang sudah dibeli tidak dapat ditukar.',
+        rec_cash: 'Tunai',
+        rec_qris: 'QRIS/Transfer',
+        rec_change: 'Kembalian',
+        rec_debt: '⚠ HUTANG / BON',
+        print_bluetooth: 'Print Bluetooth',
+        settings_store_config: 'Konfigurasi Toko',
+        settings_store: 'Setelan Toko',
+        settings_printer: 'Printer Thermal',
+        settings_language: 'Bahasa / Language',
+        settings_info: 'Informasi',
+        settings_contact: 'Hubungi Kami',
+        settings_privacy: 'Privasi & Kebijakan',
+        lang_select_title: 'Pilih Bahasa',
+        lang_select_desc: 'Pilih bahasa tampilan aplikasi',
+        printer_not_connected: 'Belum terhubung',
+        printer_no_device: 'Belum ada perangkat terhubung',
+        printer_auto_reconnect: 'Auto-Reconnect',
+        printer_auto_reconnect_desc: 'Sambung otomatis saat halaman dibuka',
+        printer_connect: 'Hubungkan Printer',
+        printer_reconnect: 'Sambung Ulang',
+        printer_test: 'Test Print',
+        printer_disconnect: 'Putuskan',
+        printer_tip: '<strong class="text-indigo-500">Tip:</strong> Aktifkan Bluetooth di HP, nyalakan printer, lalu tekan <strong>Hubungkan Printer</strong>.',
+        product_master: 'Master Produk',
+        product_name_placeholder: 'Nama Produk',
+        stock_placeholder: 'Stok',
+        label_category: 'Kategori',
+        label_cost: 'Modal',
+        label_price: 'Jual',
+        btn_save_data: 'Simpan Data',
+        manage_category: 'Kelola Kategori',
+        new_category_placeholder: 'Kategori Baru',
+        store_name_placeholder: 'Nama Toko',
+        store_address_placeholder: 'Alamat Toko',
+        btn_change_logo: 'Ganti Logo',
+        btn_save_config: 'Simpan Konfigurasi',
+        privacy_title: 'Kebijakan Privasi',
+        contact_address: 'Alamat',
+        btn_save: 'Simpan',
+        btn_cancel: 'Batal',
+        btn_close: 'Tutup',
+        btn_agree: 'Saya Setuju',
+        notif_stock_title: 'Notifikasi Stok',
+        notif_all_safe: 'Semua stok dalam kondisi aman',
+        notif_empty_stock: 'Stok Habis',
+        notif_low_stock: 'Menipis',
+        notif_fill: 'Isi',
+        notif_remaining: 'Sisa',
+        notif_unit: 'unit',
+        flash: 'Flash',
+        scanner_hint: 'Auto-detect Aktif • Jeda 2.5 Detik per Produk',
+        toast_sku_filled: 'SKU Terisi!',
+        toast_max_stock: 'Maksimal!',
+        toast_out_of_stock: 'Stok Habis!',
+        toast_product_not_found: 'Produk tidak ditemukan!',
+        toast_fill_data: 'Isi data dengan benar!',
+        toast_stock_added: 'stok ditambahkan!',
+        toast_stock_reduced: 'stok dikurangi!',
+        toast_stock_not_enough: 'Stok tidak cukup!',
+        toast_product_deleted: 'Produk Dihapus',
+        toast_save_success: 'Simpan Berhasil!',
+        toast_min_stock_saved: 'Batas Minimum Disimpan!',
+        toast_history_deleted: 'Riwayat Dihapus',
+        toast_https_required: 'Wajib HTTPS!',
+        toast_camera_fail: 'Gagal Kamera!',
+        toast_insufficient_money: 'Uang Kurang!',
+        toast_fill_name: 'Isi Nama!',
+        toast_fill_product_name: 'Isi Nama Produk!',
+        toast_fill_customer_name: 'Isi Nama Pelanggan!',
+        toast_excel_success: 'Excel Berhasil Diunduh!',
+        toast_excel_fail: 'Gagal Export Excel!',
+        toast_pdf_success: 'PDF Berhasil Diunduh!',
+        toast_pdf_fail: 'Gagal Export PDF!',
+        toast_no_data: 'Tidak ada data!',
+        toast_no_receipt: 'Tidak ada data struk!',
+        toast_printer_not_connected: 'Hubungkan printer dulu di Pengaturan!',
+        toast_printer_disconnected: 'Printer terputus',
+        toast_auto_reconnect: 'Auto-reconnect...',
+        toast_printer_reconnected: 'Printer tersambung kembali!',
+        toast_reconnect_fail: 'Gagal reconnect printer!',
+        toast_sending_test: 'Mengirim test print...',
+        toast_test_success: 'Test print berhasil!',
+        toast_test_fail: 'Gagal test print: ',
+        toast_sending_print: 'Mengirim ke printer...',
+        toast_print_success: 'Struk berhasil dicetak!',
+        toast_print_fail: 'Gagal cetak: ',
+        toast_printer_connected: 'terhubung!',
+        toast_bt_connect_fail: 'Gagal: ',
+        toast_printer_disconnected_ok: 'Printer diputuskan',
+        toast_auto_connect: 'Auto-connect:',
+        toast_retry: 'Coba ulang',
+        toast_reconnecting: 'Reconnecting printer...',
+        toast_category_exists: 'Sudah Ada!',
+        toast_fill_category: 'Isi Nama!',
+        toast_language_changed: 'Bahasa berhasil diubah!',
+        toast_opname_no_data: 'Belum ada data opname!',
+        toast_opname_no_change: 'Tidak ada perubahan stok!',
+        toast_opname_done: 'Opname selesai —',
+        toast_products_updated: 'produk diperbarui',
+        sh_in: 'Masuk',
+        sh_out: 'Keluar',
+        sh_opname: 'Opname',
+        sh_sale: 'Penjualan',
+        sh_manual_in: 'Stok masuk manual',
+        sh_manual_out: 'Stok keluar manual',
+        badge_empty: 'Habis',
+        badge_low: 'Menipis',
+        badge_ok: 'Aman',
+        badge_in: 'Masuk',
+        badge_out: 'Keluar',
+        badge_opname: 'Opname',
+        debt_not_paid: 'BELUM LUNAS',
+        debt_paid_status: 'LUNAS',
+        pcs: 'pcs',
+        transactions: 'transaksi untuk',
+        all_transactions: 'Semua',
+        address_not_set: 'Alamat belum diatur',
+        confirm_clear_history: 'Hapus semua riwayat stok?',
+        confirm_delete_product_title: 'Hapus Produk?',
+        confirm_delete_product_desc: 'Produk akan dihapus secara permanen dan tidak dapat dikembalikan.',
+        confirm_delete_btn: 'Hapus Permanen',
+    },
+    en: {
+        splash_tagline: 'Digital POS System for SMEs',
+        splash_loading: 'Loading system...',
+        menu_main: 'Main Menu',
+        menu_operational: 'Operations',
+        menu_account: 'Account',
+        nav_home: 'Home',
+        nav_pos: 'POS / Cashier',
+        nav_inventory: 'Inventory',
+        nav_stock: 'Stock Management',
+        nav_debts: 'Debt Book',
+        nav_reports: 'Reports & Data',
+        nav_settings: 'Settings',
+        nav_about: 'About App',
+        nav_home_short: 'Home',
+        nav_pos_short: 'POS',
+        nav_stock_short: 'Stock',
+        nav_warehouse_short: 'Warehouse',
+        nav_debts_short: 'Debts',
+        nav_data_short: 'Data',
+        dark_mode: 'Dark Mode',
+        dash_net_profit: 'Net Store Profit',
+        dash_today_income: "Today's Income",
+        dash_total_receivable: 'Total Receivables',
+        hide: 'Hide',
+        show: 'Show',
+        stock_status: 'Stock Status',
+        busy_hours: 'Busy Hours',
+        top_products: 'Top 3 Products',
+        items_low: 'Items Low',
+        no_data: 'No Data',
+        pos_search_placeholder: 'Search items or scan...',
+        view_detail: 'View Detail',
+        btn_checkout: 'Proceed to Payment →',
+        btn_category: 'Category',
+        btn_add: '+ Add',
+        item_search_placeholder: 'Search item or barcode...',
+        stock_in: 'Stock In',
+        stock_out: 'Stock Out',
+        stock_opname: 'Stock Opname',
+        stat_products: 'Products',
+        stat_low: 'Low',
+        stat_empty: 'Empty',
+        filter_all: 'All',
+        filter_ok: 'Safe',
+        product_status: 'Product Status',
+        stock_history: 'Stock History',
+        btn_delete: 'Clear',
+        label_select_product: 'Select Product',
+        label_qty: 'Quantity',
+        label_note_optional: 'Note (optional)',
+        note_placeholder: 'Restock from supplier...',
+        current_stock: 'Current Stock',
+        opname_desc: 'Enter the physical stock count. The system will adjust automatically.',
+        opname_physical: 'Physical Stock',
+        opname_system: 'System',
+        btn_save_opname: 'Save Opname',
+        settings_min_stock: 'Minimum Stock Threshold',
+        minstock_desc: 'Products below this threshold will be categorized as "Low" and trigger notifications.',
+        minstock_label: 'Minimum Threshold (units)',
+        debt_total_loan: 'Total Loan',
+        debt_paid: 'Paid',
+        debt_remaining: 'REMAINING',
+        debt_book_empty: 'Debt Book Empty',
+        installment_placeholder: 'Installment Amount',
+        btn_pay_installment: 'Pay Installment',
+        deadline: 'Due',
+        checkout_title: 'Confirm Payment',
+        total: 'TOTAL',
+        pay_cash_qris: 'Cash/QRIS',
+        pay_debt: 'Credit (IOU)',
+        label_cash: 'Cash',
+        label_transfer: 'Transfer/QRIS',
+        change: 'Change',
+        customer_name_placeholder: 'Customer Name',
+        due_date: 'Due Date',
+        btn_finish_checkout: 'Complete Transaction',
+        cart_detail_title: 'Cart Details',
+        receipt_title: 'Receipt',
+        receipt_items: 'ITEMS PURCHASED',
+        receipt_thank: 'Thank you for your visit!',
+        receipt_no_return: 'Purchased items cannot be exchanged.',
+        rec_cash: 'Cash',
+        rec_qris: 'QRIS/Transfer',
+        rec_change: 'Change',
+        rec_debt: '⚠ CREDIT / IOU',
+        print_bluetooth: 'Print Bluetooth',
+        settings_store_config: 'Store Configuration',
+        settings_store: 'Store Settings',
+        settings_printer: 'Thermal Printer',
+        settings_language: 'Language',
+        settings_info: 'Information',
+        settings_contact: 'Contact Us',
+        settings_privacy: 'Privacy & Policy',
+        lang_select_title: 'Select Language',
+        lang_select_desc: 'Choose app display language',
+        printer_not_connected: 'Not connected',
+        printer_no_device: 'No device connected',
+        printer_auto_reconnect: 'Auto-Reconnect',
+        printer_auto_reconnect_desc: 'Auto-connect when app opens',
+        printer_connect: 'Connect Printer',
+        printer_reconnect: 'Reconnect',
+        printer_test: 'Test Print',
+        printer_disconnect: 'Disconnect',
+        printer_tip: '<strong class="text-indigo-500">Tip:</strong> Enable Bluetooth, turn on the printer, then tap <strong>Connect Printer</strong>.',
+        product_master: 'Product Master',
+        product_name_placeholder: 'Product Name',
+        stock_placeholder: 'Stock',
+        label_category: 'Category',
+        label_cost: 'Cost',
+        label_price: 'Price',
+        btn_save_data: 'Save Data',
+        manage_category: 'Manage Categories',
+        new_category_placeholder: 'New Category',
+        store_name_placeholder: 'Store Name',
+        store_address_placeholder: 'Store Address',
+        btn_change_logo: 'Change Logo',
+        btn_save_config: 'Save Configuration',
+        privacy_title: 'Privacy Policy',
+        contact_address: 'Address',
+        btn_save: 'Save',
+        btn_cancel: 'Cancel',
+        btn_close: 'Close',
+        btn_agree: 'I Agree',
+        notif_stock_title: 'Stock Notifications',
+        notif_all_safe: 'All stock levels are safe',
+        notif_empty_stock: 'Out of Stock',
+        notif_low_stock: 'Low Stock',
+        notif_fill: 'Fill',
+        notif_remaining: 'Left',
+        notif_unit: 'units',
+        flash: 'Flash',
+        scanner_hint: 'Auto-detect Active • 2.5s Cooldown per Product',
+        toast_sku_filled: 'SKU Filled!',
+        toast_max_stock: 'Maximum!',
+        toast_out_of_stock: 'Out of Stock!',
+        toast_product_not_found: 'Product not found!',
+        toast_fill_data: 'Please fill in all fields!',
+        toast_stock_added: 'stock added!',
+        toast_stock_reduced: 'stock reduced!',
+        toast_stock_not_enough: 'Not enough stock!',
+        toast_product_deleted: 'Product Deleted',
+        toast_save_success: 'Saved Successfully!',
+        toast_min_stock_saved: 'Minimum Threshold Saved!',
+        toast_history_deleted: 'History Cleared',
+        toast_https_required: 'HTTPS Required!',
+        toast_camera_fail: 'Camera Failed!',
+        toast_insufficient_money: 'Insufficient Payment!',
+        toast_fill_name: 'Fill Name!',
+        toast_fill_product_name: 'Fill Product Name!',
+        toast_fill_customer_name: 'Fill Customer Name!',
+        toast_excel_success: 'Excel Downloaded!',
+        toast_excel_fail: 'Excel Export Failed!',
+        toast_pdf_success: 'PDF Downloaded!',
+        toast_pdf_fail: 'PDF Export Failed!',
+        toast_no_data: 'No data!',
+        toast_no_receipt: 'No receipt data!',
+        toast_printer_not_connected: 'Connect printer first in Settings!',
+        toast_printer_disconnected: 'Printer disconnected',
+        toast_auto_reconnect: 'Auto-reconnect...',
+        toast_printer_reconnected: 'Printer reconnected!',
+        toast_reconnect_fail: 'Printer reconnect failed!',
+        toast_sending_test: 'Sending test print...',
+        toast_test_success: 'Test print successful!',
+        toast_test_fail: 'Test print failed: ',
+        toast_sending_print: 'Sending to printer...',
+        toast_print_success: 'Receipt printed successfully!',
+        toast_print_fail: 'Print failed: ',
+        toast_printer_connected: 'connected!',
+        toast_bt_connect_fail: 'Failed: ',
+        toast_printer_disconnected_ok: 'Printer disconnected',
+        toast_auto_connect: 'Auto-connect:',
+        toast_retry: 'Retrying',
+        toast_reconnecting: 'Reconnecting printer...',
+        toast_category_exists: 'Already exists!',
+        toast_fill_category: 'Fill Name!',
+        toast_language_changed: 'Language changed!',
+        toast_opname_no_data: 'No opname data!',
+        toast_opname_no_change: 'No stock changes!',
+        toast_opname_done: 'Opname done —',
+        toast_products_updated: 'products updated',
+        sh_in: 'In',
+        sh_out: 'Out',
+        sh_opname: 'Opname',
+        sh_sale: 'Sale',
+        sh_manual_in: 'Manual stock in',
+        sh_manual_out: 'Manual stock out',
+        badge_empty: 'Empty',
+        badge_low: 'Low',
+        badge_ok: 'Safe',
+        badge_in: 'In',
+        badge_out: 'Out',
+        badge_opname: 'Opname',
+        debt_not_paid: 'UNPAID',
+        debt_paid_status: 'PAID',
+        pcs: 'pcs',
+        transactions: 'transactions for',
+        all_transactions: 'All',
+        address_not_set: 'Address not set',
+        confirm_clear_history: 'Clear all stock history?',
+        confirm_delete_product_title: 'Delete Product?',
+        confirm_delete_product_desc: 'This product will be permanently deleted and cannot be recovered.',
+        confirm_delete_btn: 'Delete Permanently',
+    },
+    ms: {
+        splash_tagline: 'Sistem Kasir Digital PKS',
+        splash_loading: 'Memuatkan sistem...',
+        menu_main: 'Menu Utama',
+        menu_operational: 'Operasi',
+        menu_account: 'Akaun',
+        nav_home: 'Laman Utama',
+        nav_pos: 'Kasir / POS',
+        nav_inventory: 'Inventori',
+        nav_stock: 'Pengurusan Stok',
+        nav_debts: 'Buku Hutang',
+        nav_reports: 'Laporan & Data',
+        nav_settings: 'Tetapan',
+        nav_about: 'Tentang Aplikasi',
+        nav_home_short: 'Utama',
+        nav_pos_short: 'Kasir',
+        nav_stock_short: 'Stok',
+        nav_warehouse_short: 'Gudang',
+        nav_debts_short: 'Hutang',
+        nav_data_short: 'Data',
+        dark_mode: 'Mod Gelap',
+        dash_net_profit: 'Keuntungan Bersih Kedai',
+        dash_today_income: 'Pendapatan Hari Ini',
+        dash_total_receivable: 'Jumlah Belum Terima',
+        hide: 'Sembunyikan',
+        show: 'Tunjukkan',
+        stock_status: 'Status Stok',
+        busy_hours: 'Waktu Sibuk',
+        top_products: '3 Produk Terlaris',
+        items_low: 'Item Menipis',
+        no_data: 'Tiada Data',
+        pos_search_placeholder: 'Cari barang atau imbas...',
+        view_detail: 'Lihat Butiran',
+        btn_checkout: 'Teruskan Pembayaran →',
+        btn_category: 'Kategori',
+        btn_add: '+ Tambah',
+        item_search_placeholder: 'Cari barang atau barcode...',
+        stock_in: 'Stok Masuk',
+        stock_out: 'Stok Keluar',
+        stock_opname: 'Opname Stok',
+        stat_products: 'Produk',
+        stat_low: 'Menipis',
+        stat_empty: 'Habis',
+        filter_all: 'Semua',
+        filter_ok: 'Selamat',
+        product_status: 'Status Produk',
+        stock_history: 'Sejarah Stok',
+        btn_delete: 'Padam',
+        label_select_product: 'Pilih Produk',
+        label_qty: 'Kuantiti',
+        label_note_optional: 'Nota (opsional)',
+        note_placeholder: 'Restock daripada pembekal...',
+        current_stock: 'Stok Semasa',
+        opname_desc: 'Masukkan jumlah stok fizikal yang dikira. Sistem akan diselaraskan secara automatik.',
+        opname_physical: 'Stok Fizikal',
+        opname_system: 'Sistem',
+        btn_save_opname: 'Simpan Opname',
+        settings_min_stock: 'Had Minimum Stok',
+        minstock_desc: 'Produk di bawah had ini akan dikategorikan sebagai "Menipis" dan mencetuskan notifikasi.',
+        minstock_label: 'Had Minimum (unit)',
+        debt_total_loan: 'Jumlah Pinjaman',
+        debt_paid: 'Dibayar',
+        debt_remaining: 'BAKI',
+        debt_book_empty: 'Buku Hutang Kosong',
+        installment_placeholder: 'Jumlah Ansuran',
+        btn_pay_installment: 'Bayar Ansuran',
+        deadline: 'Tempoh',
+        checkout_title: 'Sahkan Pembayaran',
+        total: 'JUMLAH',
+        pay_cash_qris: 'Tunai/QRIS',
+        pay_debt: 'Hutang (Bon)',
+        label_cash: 'Wang Tunai',
+        label_transfer: 'Pindahan/QRIS',
+        change: 'Baki',
+        customer_name_placeholder: 'Nama Pelanggan',
+        due_date: 'Tarikh Luput',
+        btn_finish_checkout: 'Selesaikan Transaksi',
+        cart_detail_title: 'Butiran Troli',
+        receipt_title: 'Resit Belanja',
+        receipt_items: 'ITEM BELIAN',
+        receipt_thank: 'Terima kasih atas kunjungan anda!',
+        receipt_no_return: 'Barang yang dibeli tidak boleh ditukar.',
+        rec_cash: 'Tunai',
+        rec_qris: 'QRIS/Pindahan',
+        rec_change: 'Baki',
+        rec_debt: '⚠ HUTANG / BON',
+        print_bluetooth: 'Cetak Bluetooth',
+        settings_store_config: 'Konfigurasi Kedai',
+        settings_store: 'Tetapan Kedai',
+        settings_printer: 'Pencetak Thermal',
+        settings_language: 'Bahasa',
+        settings_info: 'Maklumat',
+        settings_contact: 'Hubungi Kami',
+        settings_privacy: 'Privasi & Dasar',
+        lang_select_title: 'Pilih Bahasa',
+        lang_select_desc: 'Pilih bahasa paparan aplikasi',
+        printer_not_connected: 'Belum disambung',
+        printer_no_device: 'Tiada peranti disambung',
+        printer_auto_reconnect: 'Auto-Reconnect',
+        printer_auto_reconnect_desc: 'Sambung automatik semasa buka halaman',
+        printer_connect: 'Sambung Pencetak',
+        printer_reconnect: 'Sambung Semula',
+        printer_test: 'Cetak Ujian',
+        printer_disconnect: 'Putuskan',
+        printer_tip: '<strong class="text-indigo-500">Tip:</strong> Aktifkan Bluetooth, hidupkan pencetak, kemudian tekan <strong>Sambung Pencetak</strong>.',
+        product_master: 'Master Produk',
+        product_name_placeholder: 'Nama Produk',
+        stock_placeholder: 'Stok',
+        label_category: 'Kategori',
+        label_cost: 'Modal',
+        label_price: 'Harga Jual',
+        btn_save_data: 'Simpan Data',
+        manage_category: 'Urus Kategori',
+        new_category_placeholder: 'Kategori Baru',
+        store_name_placeholder: 'Nama Kedai',
+        store_address_placeholder: 'Alamat Kedai',
+        btn_change_logo: 'Tukar Logo',
+        btn_save_config: 'Simpan Konfigurasi',
+        privacy_title: 'Dasar Privasi',
+        contact_address: 'Alamat',
+        btn_save: 'Simpan',
+        btn_cancel: 'Batal',
+        btn_close: 'Tutup',
+        btn_agree: 'Saya Setuju',
+        notif_stock_title: 'Notifikasi Stok',
+        notif_all_safe: 'Semua stok dalam keadaan selamat',
+        notif_empty_stock: 'Stok Habis',
+        notif_low_stock: 'Menipis',
+        notif_fill: 'Isi',
+        notif_remaining: 'Baki',
+        notif_unit: 'unit',
+        flash: 'Flash',
+        scanner_hint: 'Auto-detect Aktif • Jeda 2.5 Saat per Produk',
+        toast_sku_filled: 'SKU Diisi!',
+        toast_max_stock: 'Maksimum!',
+        toast_out_of_stock: 'Stok Habis!',
+        toast_product_not_found: 'Produk tidak dijumpai!',
+        toast_fill_data: 'Isi data dengan betul!',
+        toast_stock_added: 'stok ditambah!',
+        toast_stock_reduced: 'stok dikurangkan!',
+        toast_stock_not_enough: 'Stok tidak mencukupi!',
+        toast_product_deleted: 'Produk Dipadam',
+        toast_save_success: 'Berjaya Disimpan!',
+        toast_min_stock_saved: 'Had Minimum Disimpan!',
+        toast_history_deleted: 'Sejarah Dipadam',
+        toast_https_required: 'HTTPS Diperlukan!',
+        toast_camera_fail: 'Kamera Gagal!',
+        toast_insufficient_money: 'Wang Tidak Mencukupi!',
+        toast_fill_name: 'Isi Nama!',
+        toast_fill_product_name: 'Isi Nama Produk!',
+        toast_fill_customer_name: 'Isi Nama Pelanggan!',
+        toast_excel_success: 'Excel Berjaya Dimuat Turun!',
+        toast_excel_fail: 'Eksport Excel Gagal!',
+        toast_pdf_success: 'PDF Berjaya Dimuat Turun!',
+        toast_pdf_fail: 'Eksport PDF Gagal!',
+        toast_no_data: 'Tiada data!',
+        toast_no_receipt: 'Tiada data resit!',
+        toast_printer_not_connected: 'Sambung pencetak dahulu di Tetapan!',
+        toast_printer_disconnected: 'Pencetak terputus',
+        toast_auto_reconnect: 'Auto-reconnect...',
+        toast_printer_reconnected: 'Pencetak disambung semula!',
+        toast_reconnect_fail: 'Gagal reconnect pencetak!',
+        toast_sending_test: 'Menghantar cetakan ujian...',
+        toast_test_success: 'Cetakan ujian berjaya!',
+        toast_test_fail: 'Cetakan ujian gagal: ',
+        toast_sending_print: 'Menghantar ke pencetak...',
+        toast_print_success: 'Resit berjaya dicetak!',
+        toast_print_fail: 'Cetak gagal: ',
+        toast_printer_connected: 'disambung!',
+        toast_bt_connect_fail: 'Gagal: ',
+        toast_printer_disconnected_ok: 'Pencetak diputuskan',
+        toast_auto_connect: 'Auto-sambung:',
+        toast_retry: 'Cuba semula',
+        toast_reconnecting: 'Menyambung semula pencetak...',
+        toast_category_exists: 'Sudah Wujud!',
+        toast_fill_category: 'Isi Nama!',
+        toast_language_changed: 'Bahasa berjaya ditukar!',
+        toast_opname_no_data: 'Tiada data opname!',
+        toast_opname_no_change: 'Tiada perubahan stok!',
+        toast_opname_done: 'Opname selesai —',
+        toast_products_updated: 'produk dikemaskini',
+        sh_in: 'Masuk',
+        sh_out: 'Keluar',
+        sh_opname: 'Opname',
+        sh_sale: 'Jualan',
+        sh_manual_in: 'Stok masuk manual',
+        sh_manual_out: 'Stok keluar manual',
+        badge_empty: 'Habis',
+        badge_low: 'Menipis',
+        badge_ok: 'Selamat',
+        badge_in: 'Masuk',
+        badge_out: 'Keluar',
+        badge_opname: 'Opname',
+        debt_not_paid: 'BELUM LUNAS',
+        debt_paid_status: 'LUNAS',
+        pcs: 'unit',
+        transactions: 'transaksi untuk',
+        all_transactions: 'Semua',
+        address_not_set: 'Alamat belum ditetapkan',
+        confirm_clear_history: 'Padam semua sejarah stok?',
+        confirm_delete_product_title: 'Padam Produk?',
+        confirm_delete_product_desc: 'Produk ini akan dipadam secara kekal dan tidak boleh dipulihkan.',
+        confirm_delete_btn: 'Padam Kekal',
+    }
+};
+
+let currentLang = localStorage.getItem('dk_lang') || 'id';
+
+function t(key) {
+    return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS['id'][key] || key;
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const val = t(key);
+        if (val && !val.startsWith('<')) el.textContent = val;
+        else if (val) el.innerHTML = val;
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.placeholder = t(key);
+    });
+    const langNames = { id: '🇮🇩 Bahasa Indonesia', en: '🇬🇧 English', ms: '🇲🇾 Bahasa Melayu' };
+    const el = document.getElementById('current-lang-display');
+    if (el) el.textContent = langNames[currentLang] || 'Bahasa Indonesia';
+    document.documentElement.lang = currentLang;
+    ['id','en','ms'].forEach(l => {
+        const opt = document.getElementById('lang-' + l);
+        if (opt) opt.classList.toggle('selected', l === currentLang);
+    });
+    const splashTag = document.getElementById('splash-tagline');
+    if (splashTag) splashTag.textContent = t('splash_tagline');
+    const splashSt = document.getElementById('splash-status');
+    if (splashSt) splashSt.textContent = t('splash_loading');
+    applyBalanceUI();
+}
+
+function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('dk_lang', lang);
+    applyTranslations();
+    closeModal('modal-language');
+    showToast(t('toast_language_changed'));
+    renderHome();
+    renderItems();
+    renderPos();
+    renderStockTab();
+    renderDebts();
+    renderData();
+}
+
+function openLanguageModal() {
+    ['id','en','ms'].forEach(l => {
+        const opt = document.getElementById('lang-' + l);
+        if (opt) opt.classList.toggle('selected', l === currentLang);
+    });
+    openModal('modal-language');
+}
+
+// ══════════════════════════════
+// CONFIRM DIALOG (replaces native confirm())
+// ══════════════════════════════
+let _confirmResolve = null;
+
+function showConfirm(title, desc, okLabel) {
+    return new Promise(resolve => {
+        _confirmResolve = resolve;
+        document.getElementById('confirm-title').textContent = title || t('confirm_delete_product_title');
+        document.getElementById('confirm-desc').textContent = desc || t('confirm_delete_product_desc');
+        document.getElementById('confirm-ok-btn').textContent = okLabel || t('confirm_delete_btn');
+        document.getElementById('modal-confirm').classList.add('open');
+        _lockBodyScroll();
+    });
+}
+
+function confirmProceed() {
+    document.getElementById('modal-confirm').classList.remove('open');
+    _unlockBodyScroll();
+    if (_confirmResolve) { _confirmResolve(true); _confirmResolve = null; }
+}
+
+function confirmCancel() {
+    document.getElementById('modal-confirm').classList.remove('open');
+    _unlockBodyScroll();
+    if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; }
+}
+
+// ══════════════════════════════
+// SPLASH SCREEN
+// ══════════════════════════════
+(function() {
+    const SPLASH_KEY = 'dk_splash_shown';
+    const splash      = document.getElementById('splash-screen');
+    const app         = document.getElementById('app');
+    const progressBar = document.getElementById('splash-progress');
+    const statusText  = document.getElementById('splash-status');
+    const lang        = localStorage.getItem('dk_lang') || 'id';
+
+    try {
+        const cfg = JSON.parse(localStorage.getItem('dk_config') || '{}');
+        if (cfg.darkMode) document.body.classList.add('dark');
+    } catch(e) {}
+
+    const taglineEl = document.getElementById('splash-tagline');
+    if (taglineEl && TRANSLATIONS[lang]) taglineEl.textContent = TRANSLATIONS[lang].splash_tagline || TRANSLATIONS['id'].splash_tagline;
+
+    const alreadyShown = sessionStorage.getItem(SPLASH_KEY) === '1';
+    if (alreadyShown) {
+        splash.classList.add('skip-instant');
+        app.style.opacity = '1';
+        app.style.transition = 'none';
+        return;
+    }
+
+    const getSteps = () => {
+        const tr = TRANSLATIONS[lang] || TRANSLATIONS['id'];
+        return [
+            { pct: 15, label: tr.splash_loading || 'Memuat sistem...' },
+            { pct: 30, label: 'Loading inventory...' },
+            { pct: 50, label: 'Loading transactions...' },
+            { pct: 68, label: 'Preparing POS...' },
+            { pct: 82, label: 'Checking stock...' },
+            { pct: 92, label: 'Finalizing...' },
+            { pct: 100, label: '✓ Ready!' }
+        ];
+    };
+    const steps = getSteps();
+    let stepIdx = 0;
+    function runStep() {
+        if (stepIdx >= steps.length) {
+            sessionStorage.setItem(SPLASH_KEY, '1');
+            setTimeout(() => {
+                splash.classList.add('fade-out');
+                app.style.opacity = '1';
+                setTimeout(() => { splash.style.display = 'none'; }, 650);
+            }, 300);
+            return;
+        }
+        const step = steps[stepIdx];
+        progressBar.style.width = step.pct + '%';
+        statusText.style.opacity = '0';
+        setTimeout(() => { statusText.textContent = step.label; statusText.style.opacity = '1'; }, 120);
+        stepIdx++;
+        const delays = [380, 320, 350, 280, 300, 250, 450];
+        setTimeout(runStep, delays[stepIdx - 1] || 300);
+    }
+    setTimeout(runStep, 500);
+})();
+
+// ── State ──────────────────────────────────────────────────────────────
+let items        = JSON.parse(localStorage.getItem('dk_items'))         || [];
+let logs         = JSON.parse(localStorage.getItem('dk_logs'))          || [];
+let debts        = JSON.parse(localStorage.getItem('dk_debts'))         || [];
+let categories   = JSON.parse(localStorage.getItem('dk_categories'))    || ['Semua','Umum','Makanan','Minuman'];
+let config       = JSON.parse(localStorage.getItem('dk_config'))        || { darkMode:false, storeName:'DheKasir', storeAddress:'-', storePhone:'', url:'', logo:null, minStock:5 };
+let stockHistory = JSON.parse(localStorage.getItem('dk_stock_history')) || [];
+
+let cart = [];
+let payMethod = 'cash';
+let activePosCategory = 'Semua';
+let mainChart = null;
+let html5QrCode = null;
+let lastReceiptData = null;
+let lastScannedCode = "";
+let lastScannedTime = 0;
+let currentDebtId = null;
+let currentStockMoveType = 'in';
+let flashTrack = null;
+let flashOn = false;
+let opnameData = {};
+const SCAN_COOLDOWN = 2500;
+
+// ══════════════════════════════
+// BALANCE HIDE / SHOW
+// ══════════════════════════════
+let balanceHidden = localStorage.getItem('dk_balance_hidden') === '1';
+
+function applyBalanceUI() {
+    const hero  = document.getElementById('dash-hero-wrap');
+    const icon  = document.getElementById('balance-eye-icon');
+    const label = document.getElementById('balance-toggle-label');
+    const btn   = document.getElementById('balance-toggle-btn');
+    if (!hero) return;
+    if (balanceHidden) {
+        hero.classList.add('balance-hidden');
+        if (icon)  icon.className = 'fa-solid fa-eye-slash btn-eye-icon';
+        if (label) label.textContent = t('show');
+        if (btn)   btn.setAttribute('aria-label', t('show'));
+    } else {
+        hero.classList.remove('balance-hidden');
+        if (icon)  icon.className = 'fa-solid fa-eye btn-eye-icon';
+        if (label) label.textContent = t('hide');
+        if (btn)   btn.setAttribute('aria-label', t('hide'));
+    }
+}
+
+function toggleBalanceVisibility() {
+    balanceHidden = !balanceHidden;
+    localStorage.setItem('dk_balance_hidden', balanceHidden ? '1' : '0');
+    const btn = document.getElementById('balance-toggle-btn');
+    if (btn) { btn.classList.add('hiding'); setTimeout(() => btn.classList.remove('hiding'), 350); }
+    applyBalanceUI();
+    showToast(balanceHidden ? '🙈 ' + t('hide') : '👁 ' + t('show'));
+}
+
+// ══════════════════════════════
+// BLUETOOTH PRINTER
+// ══════════════════════════════
+const BT_PREFS_KEY = 'dk_bt_prefs';
+const BT_KNOWN_SERVICES = [
+    '000018f0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455',
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e','0000ff00-0000-1000-8000-00805f9b34fb',
+    '0000ffe0-0000-1000-8000-00805f9b34fb','0000fff0-0000-1000-8000-00805f9b34fb',
+    '000003f3-0000-1000-8000-00805f9b34fb'
+];
+const BT_MAX_RETRIES = 3, BT_RETRY_BASE_MS = 1500;
+let btDevice=null, btCharacteristic=null, btConnected=false, btReconnectTimer=null;
+let btPrefs = JSON.parse(localStorage.getItem(BT_PREFS_KEY)||'{"autoReconnect":false,"lastName":""}');
+
+function _setPrinterUI(state, deviceName='') {
+    const statusEl=document.getElementById('printer-status'),iconWrap=document.getElementById('printer-icon-wrap'),devName=document.getElementById('printer-device-name');
+    const modalBar=document.getElementById('printer-modal-bar'),modalIcon=document.getElementById('printer-modal-icon'),modalName=document.getElementById('printer-modal-name');
+    const modalDesc=document.getElementById('printer-modal-desc'),modalStat=document.getElementById('printer-modal-status-text'),signal=document.getElementById('printer-signal');
+    const btnConnect=document.getElementById('printer-btn-connect'),btnReconn=document.getElementById('printer-btn-reconnect'),btnActions=document.getElementById('printer-btn-actions');
+    const printLbl=document.getElementById('print-btn-label'),printBtSt=document.getElementById('print-bt-status');
+    const name=deviceName||btPrefs.lastName||t('settings_printer');
+    const map={offline:{text:'OFFLINE',cls:'printer-offline',barCls:'offline',iconColor:'var(--text-muted)',iconBg:'var(--surface)',desc:t('printer_no_device')},connecting:{text:'CONNECTING…',cls:'printer-connecting',barCls:'connecting',iconColor:'#f59e0b',iconBg:'rgba(245,158,11,0.1)',desc:'...'},ready:{text:'READY ✓',cls:'printer-ready',barCls:'ready',iconColor:'#10b981',iconBg:'rgba(16,185,129,0.1)',desc:'Siap mencetak struk'},error:{text:'ERROR',cls:'printer-error',barCls:'error',iconColor:'#ef4444',iconBg:'rgba(239,68,68,0.1)',desc:'Gagal'}};
+    const m=map[state]||map.offline;
+    if(statusEl){statusEl.className=`text-[8px] font-black uppercase ${m.cls}`;statusEl.innerText=m.text;}
+    if(iconWrap)iconWrap.style.color=m.iconColor;
+    if(devName)devName.innerText=state==='offline'?t('printer_not_connected'):name;
+    if(modalBar)modalBar.className=`printer-status-bar ${m.barCls}`;
+    if(modalIcon){modalIcon.style.color=m.iconColor;modalIcon.style.background=m.iconBg;}
+    if(modalName)modalName.innerText=state!=='offline'?name:t('settings_printer');
+    if(modalDesc)modalDesc.innerText=m.desc;
+    if(modalStat){modalStat.style.color=m.iconColor;modalStat.innerText=m.text;}
+    if(signal)signal.classList.toggle('hidden',state!=='ready');
+    if(btnConnect)btnConnect.classList.toggle('hidden',state==='ready');
+    if(btnReconn)btnReconn.classList.toggle('hidden',state!=='error');
+    if(btnActions)btnActions.classList.toggle('hidden',state!=='ready');
+    if(printLbl)printLbl.innerText=t('print_bluetooth');
+    if(printBtSt)printBtSt.innerText=state==='ready'?`(${name})`:'';
+    const arToggle=document.getElementById('printer-auto-reconnect');
+    if(arToggle&&arToggle.checked!==btPrefs.autoReconnect)arToggle.checked=btPrefs.autoReconnect;
+}
+function savePrinterPrefs(){const arToggle=document.getElementById('printer-auto-reconnect');if(arToggle)btPrefs.autoReconnect=arToggle.checked;localStorage.setItem(BT_PREFS_KEY,JSON.stringify(btPrefs));}
+function openPrinterModal(){_setPrinterUI(btConnected?'ready':(btDevice?'error':'offline'),btDevice?.name||'');const ar=document.getElementById('printer-auto-reconnect');if(ar)ar.checked=btPrefs.autoReconnect;openModal('modal-printer');}
+async function _findWritableChar(server){let services=[];try{services=await server.getPrimaryServices();}catch(e){for(const uuid of BT_KNOWN_SERVICES){try{const s=await server.getPrimaryService(uuid);services=[s];break;}catch(e2){}}}for(const svc of services){let chars=[];try{chars=await svc.getCharacteristics();}catch(e){continue;}for(const ch of chars)if(ch.properties.write||ch.properties.writeWithoutResponse)return ch;}return null;}
+async function _doConnect(device,retryCount=0){_setPrinterUI('connecting',device.name);try{const server=await device.gatt.connect();const char=await _findWritableChar(server);if(!char)throw new Error("No writable char");btDevice=device;btCharacteristic=char;btConnected=true;btPrefs.lastName=device.name||btPrefs.lastName;savePrinterPrefs();_setPrinterUI('ready',device.name);return true;}catch(e){if(retryCount<BT_MAX_RETRIES-1){const wait=BT_RETRY_BASE_MS*Math.pow(2,retryCount);showToast(`${t('toast_retry')} (${retryCount+1}/${BT_MAX_RETRIES})...`);await new Promise(r=>setTimeout(r,wait));return _doConnect(device,retryCount+1);}btConnected=false;btCharacteristic=null;_setPrinterUI('error',device.name);throw e;}}
+function _onDisconnected(){btConnected=false;btCharacteristic=null;_setPrinterUI(btDevice?'error':'offline',btDevice?.name||'');showToast("⚠ "+t('toast_printer_disconnected'));if(btPrefs.autoReconnect&&btDevice){clearTimeout(btReconnectTimer);btReconnectTimer=setTimeout(async()=>{if(!btConnected){showToast("🔄 "+t('toast_auto_reconnect'));try{await _doConnect(btDevice);showToast("✓ "+t('toast_printer_reconnected'));}catch(e){}}},3000);}}
+async function btConnect(){_setPrinterUI('connecting');try{const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:BT_KNOWN_SERVICES});device.addEventListener('gattserverdisconnected',_onDisconnected);await _doConnect(device);showToast(`✓ "${device.name||'Printer'}" ${t('toast_printer_connected')}`);}catch(e){if(e.name!=='NotFoundError'){_setPrinterUI('error',btDevice?.name||'');showToast(t('toast_bt_connect_fail')+(e.message||'Bluetooth error'));}else _setPrinterUI(btDevice?'error':'offline');}}
+async function btReconnect(){if(!btDevice)return btConnect();_setPrinterUI('connecting',btDevice.name);try{await _doConnect(btDevice);showToast(`✓ "${btDevice.name||'Printer'}" ${t('toast_printer_reconnected')}`);}catch(e){showToast(t('toast_bt_connect_fail')+' '+(e.message||'Error'));}}
+function btDisconnect(){clearTimeout(btReconnectTimer);if(btDevice?.gatt?.connected)try{btDevice.gatt.disconnect();}catch(e){}btDevice=null;btCharacteristic=null;btConnected=false;btPrefs.lastName='';savePrinterPrefs();_setPrinterUI('offline');showToast(t('toast_printer_disconnected_ok'));}
+async function btAutoReconnectOnLoad(){if(!btPrefs.autoReconnect)return;if(!navigator.bluetooth||typeof navigator.bluetooth.getDevices!=='function')return;try{const devices=await navigator.bluetooth.getDevices();if(!devices||devices.length===0)return;let target=devices.find(d=>d.name===btPrefs.lastName)||devices[0];if(!target)return;target.addEventListener('gattserverdisconnected',_onDisconnected);_setPrinterUI('connecting',target.name);await _doConnect(target);showToast(`✓ ${t('toast_auto_connect')} "${target.name||'Printer'}"`);}catch(e){_setPrinterUI('offline');}}
+async function btWrite(data){if(!btCharacteristic)throw new Error(t('toast_printer_not_connected'));if(btDevice&&!btDevice.gatt.connected){showToast(t('toast_reconnecting'));await _doConnect(btDevice);if(!btCharacteristic)throw new Error(t('toast_reconnect_fail'));}const CHUNK=512;const useWithout=!btCharacteristic.properties.write&&btCharacteristic.properties.writeWithoutResponse;for(let offset=0;offset<data.length;offset+=CHUNK){const chunk=data.slice(offset,offset+CHUNK);try{if(useWithout)await btCharacteristic.writeValueWithoutResponse(chunk);else await btCharacteristic.writeValue(chunk);}catch(e){for(let i=0;i<chunk.length;i+=20){const mini=chunk.slice(i,i+20);try{await btCharacteristic.writeValueWithoutResponse(mini);}catch(e2){await btCharacteristic.writeValue(mini);}await new Promise(r=>setTimeout(r,5));}}if(data.length>CHUNK)await new Promise(r=>setTimeout(r,30));}}
+async function btTestPrint(){const testData={id:'TEST-'+Date.now(),items:[{name:'Test Item',qty:1,price:10000,cost:0}],amount:10000,total_cost:0,pay_cash:10000,pay_qris:0,change:0,method:'Cash/QRIS',created_at:new Date().toISOString()};showToast(t('toast_sending_test'));try{const data=buildEscPosReceipt(testData);await btWrite(data);showToast("✓ "+t('toast_test_success'));beepScan();}catch(e){showToast(t('toast_test_fail')+(e.message||'Error'));_setPrinterUI('error',btDevice?.name||'');}}
+async function printBluetoothReceipt(){if(!lastReceiptData)return showToast(t('toast_no_receipt'));if(!btCharacteristic&&!btDevice){showToast(t('toast_printer_not_connected'));return;}if(!btConnected){showToast(t('toast_reconnecting'));try{await btReconnect();}catch(e){return showToast(t('toast_reconnect_fail'));}}showToast(t('toast_sending_print'));try{const data=buildEscPosReceipt(lastReceiptData);await btWrite(data);showToast("✓ "+t('toast_print_success'));beepScan();}catch(e){showToast(t('toast_print_fail')+(e.message||'Error'));btCharacteristic=null;btConnected=false;_setPrinterUI('error',btDevice?.name||'');}}
+function buildEscPosReceipt(d){const enc=new TextEncoder();const bytes=[];const ESC=0x1B,GS=0x1D,LF=0x0A;function cmd(...args){bytes.push(...args);}function text(s){const safe=s.replace(/[^\x00-\x7F]/g,c=>{const map={'Rp':'Rp','×':'x','★':'*','→':'->','✓':'v'};return map[c]||'?';});bytes.push(...enc.encode(safe));}function lf(n=1){for(let i=0;i<n;i++)bytes.push(LF);}const sname=config.storeName||'DheKasir',saddr=config.storeAddress||'',sphone=config.storePhone||'';cmd(ESC,0x40);cmd(ESC,0x74,0x00);cmd(ESC,0x61,0x01);cmd(ESC,0x45,0x01);cmd(GS,0x21,0x11);text(sname.toUpperCase());lf();cmd(GS,0x21,0x00);cmd(ESC,0x45,0x00);if(saddr&&saddr!=='-'){text(saddr);lf();}if(sphone){text('Telp: '+sphone);lf();}const dt=new Date(d.created_at||Date.now());text(dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}));lf();text('No: '+d.id);lf();cmd(ESC,0x61,0x00);text('--------------------------------');lf();text(t('receipt_items'));lf();(d.items||[]).forEach(item=>{text(item.name);lf();const left=`  ${item.qty} x ${formatIDRRaw(item.price)}`;const right=formatIDRRaw(item.price*item.qty);text(left+'.'.repeat(Math.max(1,32-left.length-right.length))+right);lf();});text('--------------------------------');lf();cmd(ESC,0x45,0x01);const tl=t('total'),tr=formatIDRRaw(d.amount);text(tl+' '.repeat(Math.max(1,32-tl.length-tr.length))+tr);lf();cmd(ESC,0x45,0x00);if(d.method==='Hutang'||d.method==='Debt'){text(t('rec_debt'));lf();}else{if(d.pay_cash>0){const l=t('rec_cash'),r=formatIDRRaw(d.pay_cash);text(l+' '.repeat(Math.max(1,32-l.length-r.length))+r);lf();}if(d.pay_qris>0){const l=t('rec_qris'),r=formatIDRRaw(d.pay_qris);text(l+' '.repeat(Math.max(1,32-l.length-r.length))+r);lf();}}const cl=t('rec_change'),cr=formatIDRRaw(d.change);text(cl+' '.repeat(Math.max(1,32-cl.length-cr.length))+cr);lf();text('--------------------------------');lf();cmd(ESC,0x61,0x01);text(t('receipt_thank'));lf();text(t('receipt_no_return'));lf();text('* DheKasir v1.4 *');lf();cmd(ESC,0x61,0x00);lf(4);cmd(GS,0x56,0x42,0x00);return new Uint8Array(bytes);}
+function formatIDRRaw(n){return'Rp'+Number(n||0).toLocaleString('id-ID');}
+
+// ── Scroll Lock ────────────────────────────────────────────────────────
+let _sidebarScrollY=0;
+function _lockSidebarScroll(){_sidebarScrollY=window.scrollY;document.body.classList.add('sidebar-open');document.body.style.top=`-${_sidebarScrollY}px`;}
+function _unlockSidebarScroll(){document.body.classList.remove('sidebar-open');document.body.style.top='';window.scrollTo(0,_sidebarScrollY);}
+let _modalOpenCount=0,_scrollYBeforeLock=0;
+function _lockBodyScroll(){_modalOpenCount++;if(_modalOpenCount===1){_scrollYBeforeLock=window.scrollY;document.body.classList.add('modal-open');document.body.style.top=`-${_scrollYBeforeLock}px`;}}
+function _unlockBodyScroll(){_modalOpenCount=Math.max(0,_modalOpenCount-1);if(_modalOpenCount===0){document.body.classList.remove('modal-open');document.body.style.top='';window.scrollTo(0,_scrollYBeforeLock);}}
+
+// ── Sidebar ──────────────────────────────────────────────────────────────
+function toggleSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'),btn=document.getElementById('hamburger-btn');if(sb.classList.contains('open'))closeSidebar();else{sb.classList.add('open');ov.classList.add('open');btn.classList.add('open');_lockSidebarScroll();}}
+function closeSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay'),btn=document.getElementById('hamburger-btn');sb.classList.remove('open');ov.classList.remove('open');btn.classList.remove('open');_unlockSidebarScroll();}
+
+// ── Audio ────────────────────────────────────────────────────────────
+let audioCtx=null;
+function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx;}
+function beepScan(){try{const ctx=getAudioCtx(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.type='square';osc.frequency.setValueAtTime(880,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(1100,ctx.currentTime+0.06);gain.gain.setValueAtTime(0.18,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.1);osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.1);}catch(e){}}
+function beepError(){try{const ctx=getAudioCtx(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.type='sawtooth';osc.frequency.setValueAtTime(350,ctx.currentTime);osc.frequency.exponentialRampToValueAtTime(200,ctx.currentTime+0.2);gain.gain.setValueAtTime(0.12,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.22);osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.22);}catch(e){}}
+function chimeSuccess(){try{const ctx=getAudioCtx(),notes=[523.25,659.25,783.99,1046.50];notes.forEach((freq,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.type='sine';osc.frequency.setValueAtTime(freq,ctx.currentTime);const t2=ctx.currentTime+i*0.11;gain.gain.setValueAtTime(0,t2);gain.gain.linearRampToValueAtTime(0.22,t2+0.02);gain.gain.exponentialRampToValueAtTime(0.001,t2+0.18);osc.start(t2);osc.stop(t2+0.2);});}catch(e){}}
+
+// ── Helpers ─────────────────────────────────────────────────────────────
+function formatIDR(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n||0);}
+function rawIDR(n){return Number(n||0);}
+function showToast(m){const el=document.getElementById('toast');if(!el)return;el.innerText=m;el.style.opacity='1';setTimeout(()=>el.style.opacity='0',2500);}
+function openModal(id){const el=document.getElementById(id);if(el&&el.classList.contains('hidden')){el.classList.remove('hidden');_lockBodyScroll();}}
+function closeModal(id){const el=document.getElementById(id);if(el&&!el.classList.contains('hidden')){el.classList.add('hidden');_unlockBodyScroll();}}
+function saveStorage(){localStorage.setItem('dk_items',JSON.stringify(items));localStorage.setItem('dk_logs',JSON.stringify(logs));localStorage.setItem('dk_debts',JSON.stringify(debts));localStorage.setItem('dk_stock_history',JSON.stringify(stockHistory));}
+
+// ── Tab Navigation ──────────────────────────────────────────────────────
+function switchTab(tab){
+    document.querySelectorAll('.tab-content').forEach(s=>s.classList.remove('active'));
+    const target=document.getElementById(`tab-${tab}`);if(target)target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    const navBtn=document.getElementById(`n-${tab}`);if(navBtn)navBtn.classList.add('active');
+    document.querySelectorAll('.sidebar-item[id^="sb-"]').forEach(b=>b.classList.remove('active'));
+    const sbBtn=document.getElementById(`sb-${tab}`);if(sbBtn)sbBtn.classList.add('active');
+    localStorage.setItem('dk_active_tab',tab);
+    if(tab==='home')renderHome();if(tab==='data')renderData();if(tab==='items')renderItems();
+    if(tab==='pos')renderPos();if(tab==='debts')renderDebts();if(tab==='stock')renderStockTab();
+}
+
+// ── Categories ─────────────────────────────────────────────────────────
+function renderCategoryOptions(){const s=document.getElementById('p-category');if(!s)return;s.innerHTML=categories.filter(c=>c!=='Semua').map(c=>`<option value="${c}">${c}</option>`).join('');}
+function renderPosCategoryChips(){const c=document.getElementById('pos-category-chips');if(!c)return;c.innerHTML=categories.map(cat=>`<button onclick="setPosCategory('${cat}')" class="flex-none px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all ${activePosCategory===cat?'cat-chip-active':'cat-chip-inactive'}">${cat}</button>`).join('');}
+function setPosCategory(c){activePosCategory=c;renderPosCategoryChips();renderPos();}
+function renderCategoryList(){const list=document.getElementById('category-list');list.innerHTML=categories.filter(c=>c!=='Semua').map(c=>`<div class="flex items-center justify-between p-4 rounded-2xl surface"><span class="text-sm font-bold">${c}</span>${c!=='Umum'?`<button onclick="deleteCategory('${c}')" class="text-rose-500 p-2"><i class="fa-solid fa-trash-can text-xs"></i></button>`:''}</div>`).join('');}
+function openCategoryModal(){renderCategoryList();openModal('modal-category');}
+function addCategory(){const input=document.getElementById('new-cat-name');const val=input.value.trim();if(!val)return showToast(t('toast_fill_category'));if(categories.includes(val))return showToast(t('toast_category_exists'));categories.push(val);input.value='';saveCategories();renderCategoryList();renderCategoryOptions();renderPosCategoryChips();}
+function deleteCategory(name){categories=categories.filter(c=>c!==name);saveCategories();renderCategoryList();renderCategoryOptions();renderPosCategoryChips();}
+function saveCategories(){localStorage.setItem('dk_categories',JSON.stringify(categories));}
+
+// ── POS ─────────────────────────────────────────────────────────────────
+function renderPos(){
+    const q=(document.getElementById('pos-search')||{value:''}).value.toLowerCase();
+    const grid=document.getElementById('pos-grid');if(!grid)return;
+    const filtered=items.filter(i=>(i.name.toLowerCase().includes(q)||String(i.barcode).includes(q))&&(activePosCategory==='Semua'||i.category===activePosCategory));
+    grid.innerHTML=filtered.map(i=>{
+        const inCart=cart.find(c=>c.id==i.id);
+        return `<div onclick="${i.stock>0?`addToCart(${i.id})`:''}" class="card p-4 relative active:scale-95 transition-all ${i.stock<=0?'opacity-40 grayscale':'cursor-pointer'}">
+            ${inCart?`<div class="absolute -top-1 -right-1 w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-black shadow-lg animate-pop z-10">${inCart.qty}</div>`:''}
+            ${i.stock<=config.minStock&&i.stock>0?`<div class="absolute top-2 left-2 w-5 h-5 bg-amber-400 text-white rounded-full flex items-center justify-center text-[8px] font-black">!</div>`:''}
+            <div class="w-full aspect-square rounded-2xl flex items-center justify-center text-3xl mb-3 text-indigo-200 surface">📦</div>
+            <p class="text-[11px] font-bold line-clamp-1">${i.name}</p>
+            <p class="text-[13px] font-black text-indigo-600">${formatIDR(i.price)}</p>
+            <p class="text-[8px] font-black ${i.stock<=0?'text-red-400':i.stock<=config.minStock?'text-amber-500':'text-muted'} mt-1">${t('current_stock')}: ${i.stock}</p>
+        </div>`;
+    }).join('')||`<div class="col-span-2 text-center py-12 opacity-30 text-sm">${t('no_data')}</div>`;
+}
+function addToCart(id){const it=items.find(i=>i.id==id);const inC=cart.find(c=>c.id==id);if(inC){if(inC.qty>=it.stock){beepError();return showToast(t('toast_out_of_stock'));}inC.qty++;}else{cart.push({...it,qty:1});}updateCartUI();renderPos();}
+function updateCartItem(id,change){const idx=cart.findIndex(c=>c.id==id);if(idx===-1)return;const orig=items.find(i=>i.id==id);cart[idx].qty+=change;if(cart[idx].qty>orig.stock){cart[idx].qty=orig.stock;beepError();showToast(t('toast_max_stock'));}if(cart[idx].qty<=0)cart.splice(idx,1);updateCartUI();renderCartDetails();renderPos();}
+function updateCartUI(){const total=cart.reduce((a,b)=>a+(b.price*b.qty),0);const count=cart.reduce((a,b)=>a+b.qty,0);document.getElementById('cart-count').innerText=count;document.getElementById('cart-total').innerText=formatIDR(total);document.getElementById('cart-float').classList.toggle('hidden',cart.length===0);}
+function openCartDetails(){renderCartDetails();openModal('modal-cart-details');}
+function renderCartDetails(){
+    const total=cart.reduce((a,b)=>a+(b.price*b.qty),0);
+    document.getElementById('cart-detail-total').innerText=formatIDR(total);
+    document.getElementById('cart-items-list').innerHTML=cart.map(c=>`
+        <div class="flex items-center justify-between p-4 rounded-2xl surface">
+            <div class="flex-1"><p class="text-xs font-black">${c.name}</p><p class="text-[10px] text-muted">${formatIDR(c.price)}</p></div>
+            <div class="flex items-center gap-3">
+                <button onclick="updateCartItem(${c.id},-1)" class="w-8 h-8 rounded-xl flex items-center justify-center text-rose-500 shadow-sm card"><i class="fa-solid fa-minus text-xs"></i></button>
+                <span class="text-sm font-black w-4 text-center">${c.qty}</span>
+                <button onclick="updateCartItem(${c.id},1)" class="w-8 h-8 rounded-xl flex items-center justify-center text-emerald-500 shadow-sm card"><i class="fa-solid fa-plus text-xs"></i></button>
+            </div>
+        </div>`).join('');
+    if(cart.length===0)closeModal('modal-cart-details');
+}
+function resetCart(){cart=[];updateCartUI();renderPos();}
+
+// ── Checkout ─────────────────────────────────────────────────────────────
+function openCheckout(){const total=cart.reduce((a,b)=>a+(b.price*b.qty),0);document.getElementById('co-grandtotal').innerText=formatIDR(total);['pay-amt-cash','pay-amt-qris','debt-customer','debt-due'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('pay-change').innerText='Rp 0';setPayMethod('cash');openModal('modal-checkout');}
+function setPayMethod(m){payMethod=m;const bc=document.getElementById('m-cash'),bd=document.getElementById('m-debt'),ac=document.getElementById('pay-cash-area'),ad=document.getElementById('pay-debt-area');if(bc){bc.style.background=m==='cash'?'var(--card)':'transparent';bc.style.color=m==='cash'?'#4f46e5':'var(--text-muted)';bc.style.boxShadow=m==='cash'?'0 1px 3px rgba(0,0,0,0.1)':'none';}if(bd){bd.style.background=m==='debt'?'var(--card)':'transparent';bd.style.color=m==='debt'?'#ef4444':'var(--text-muted)';bd.style.boxShadow=m==='debt'?'0 1px 3px rgba(0,0,0,0.1)':'none';}if(ac)ac.classList.toggle('hidden',m!=='cash');if(ad)ad.classList.toggle('hidden',m!=='debt');calcChange();}
+function calcChange(){if(payMethod!=='cash'){document.getElementById('pay-change').innerText='Rp 0';return;}const total=cart.reduce((a,b)=>a+(b.price*b.qty),0);const cash=Number(document.getElementById('pay-amt-cash').value)||0;const qris=Number(document.getElementById('pay-amt-qris').value)||0;document.getElementById('pay-change').innerText=formatIDR(Math.max(0,(cash+qris)-total));}
+async function finishCheckout(){
+    const total=cart.reduce((a,b)=>a+(b.price*b.qty),0);
+    let cash=Number(document.getElementById('pay-amt-cash').value)||0;
+    let qris=Number(document.getElementById('pay-amt-qris').value)||0;
+    let change=Math.max(0,(cash+qris)-total);
+    if(payMethod==='cash'&&(cash+qris)<total){beepError();return showToast(t('toast_insufficient_money'));}
+    if(payMethod==='debt'){const customer=document.getElementById('debt-customer').value;if(!customer){beepError();return showToast(t('toast_fill_customer_name'));}cash=0;qris=0;change=0;}
+    const tid="T-"+Date.now();
+    const log={id:tid,items:cart.map(c=>({name:c.name,qty:c.qty,price:c.price,cost:c.cost||0})),amount:total,total_cost:cart.reduce((a,c)=>a+((Number(c.cost)||0)*c.qty),0),pay_cash:cash,pay_qris:qris,change:change,method:payMethod==='cash'?'Cash/QRIS':'Hutang',date:new Date().toISOString().split('T')[0],created_at:new Date().toISOString()};
+    if(payMethod==='debt'){const d={id:"D-"+Date.now(),customer:document.getElementById('debt-customer').value,transactionId:tid,total:total,paid:0,balance:total,dueDate:document.getElementById('debt-due').value||'-',status:t('debt_not_paid')};debts.push(d);await syncCloud({...d,type:'debt_record'});}
+    for(const c of cart){const i=items.find(x=>x.id==c.id);if(i){addStockHistory(i.id,i.name,'out',c.qty,`${t('sh_sale')}: ${tid}`);i.stock-=c.qty;syncCloud(i);}}
+    logs.push(log);saveStorage();closeModal('modal-checkout');chimeSuccess();showReceipt(log);resetCart();renderHome();renderPos();checkStockAlerts();await syncCloud(log);
+}
+
+// ── Receipt ──────────────────────────────────────────────────────────────
+function showReceipt(d){
+    lastReceiptData=d;
+    const sname=config.storeName||'DheKasir',saddr=config.storeAddress||'',sphone=config.storePhone||'';
+    const logoBox=document.getElementById('rec-logo-box');
+    if(config.logo)logoBox.innerHTML=`<img src="${config.logo}" alt="Logo">`;
+    else logoBox.innerHTML=`<div class="rec-logo-placeholder">${(sname[0]||'D').toUpperCase()}</div>`;
+    document.getElementById('rec-store-name').innerText=sname;
+    document.getElementById('rec-store-addr').innerText=saddr;
+    document.getElementById('rec-store-addr').style.display=saddr&&saddr!=='-'?'':'none';
+    document.getElementById('rec-store-phone').innerText=sphone?'☎ '+sphone:'';
+    document.getElementById('rec-store-phone').style.display=sphone?'':'none';
+    document.getElementById('rec-date').innerText=new Date(d.created_at||Date.now()).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'});
+    document.getElementById('rec-id').innerText='No: '+d.id;
+    const itemsTitle=document.getElementById('rec-items-title');if(itemsTitle)itemsTitle.innerText=t('receipt_items');
+    const totalLabel=document.getElementById('rec-total-label');if(totalLabel)totalLabel.innerText=t('total');
+    const changeLabel=document.getElementById('rec-change-label');if(changeLabel)changeLabel.innerText=t('rec_change');
+    document.getElementById('rec-items').innerHTML=(d.items||[]).map(item=>`
+        <div class="rec-item-row"><span class="rec-item-name">${item.name}</span><span class="rec-item-subtotal">${formatIDR(item.price*item.qty)}</span></div>
+        <div class="rec-item-detail">${item.qty} × ${formatIDR(item.price)}</div>`).join('');
+    document.getElementById('rec-total').innerText=formatIDR(d.amount);
+    const pd=document.getElementById('rec-payment-details');
+    if(d.method==='Hutang'||d.method==='Debt'){pd.innerHTML=`<div style="text-align:center;margin:4px 0;"><span class="rec-debt-badge">${t('rec_debt')}</span></div>`;}
+    else{let rows='';if(d.pay_cash>0)rows+=`<div class="rec-pay-row"><span>${t('rec_cash')}</span><span>${formatIDR(d.pay_cash)}</span></div>`;if(d.pay_qris>0)rows+=`<div class="rec-pay-row"><span>${t('rec_qris')}</span><span>${formatIDR(d.pay_qris)}</span></div>`;pd.innerHTML=rows;}
+    document.getElementById('rec-change').innerText=formatIDR(d.change);
+    const footer=document.getElementById('rec-footer');
+    if(footer)footer.innerHTML=`<p>${t('receipt_thank')}</p><p style="margin-top:3px;">${t('receipt_no_return')}</p><p style="margin-top:6px;font-size:8px;letter-spacing:0.04em;">★ DheKasir v1.4 ★</p>`;
+    const printBtSt=document.getElementById('print-bt-status');
+    if(printBtSt)printBtSt.innerText=btConnected?(btDevice?.name?`(${btDevice.name})`:'(Ready)'):'(Offline)';
+    openModal('modal-receipt');
+}
+
+// ── Scanner ──────────────────────────────────────────────────────────────
+async function openScanner(mode='cart'){
+    if(location.protocol!=='https:'&&location.hostname!=='localhost')return showToast(t('toast_https_required'));
+    flashOn=false;flashTrack=null;
+    const fb=document.getElementById('flash-btn');if(fb){fb.disabled=true;fb.classList.remove('flash-on');}
+    const scannerEl=document.getElementById('modal-scanner');
+    if(scannerEl&&scannerEl.classList.contains('hidden')){scannerEl.classList.remove('hidden');_lockBodyScroll();}
+    if(!html5QrCode)html5QrCode=new Html5Qrcode("reader");
+    html5QrCode.start({facingMode:"environment"},{fps:24,qrbox:{width:280,height:160}},(text)=>{
+        if(navigator.vibrate)navigator.vibrate(100);
+        if(mode==='sku'){document.getElementById('p-barcode').value=text;beepScan();showToast(t('toast_sku_filled'));closeScanner();return;}
+        if(mode==='stock-product'){document.getElementById('sm-product').value=text;updateSmCurrentStock();return;}
+        const now=Date.now();
+        if(text===lastScannedCode&&(now-lastScannedTime)<SCAN_COOLDOWN)return;
+        const found=items.find(i=>String(i.barcode)===String(text));
+        if(found&&found.stock>0){addToCart(found.id);lastScannedCode=text;lastScannedTime=now;beepScan();const sfb=document.getElementById('scan-feedback');sfb.innerText='+ '+found.name;sfb.classList.remove('hidden');setTimeout(()=>sfb.classList.add('hidden'),2000);}
+        else if(found){beepError();showToast(t('toast_out_of_stock'));}
+        else{beepError();showToast(t('toast_product_not_found'));}
+    }).then(()=>{
+        try{const video=document.querySelector('#reader video');if(video&&video.srcObject){const tracks=video.srcObject.getVideoTracks();if(tracks.length>0){const track=tracks[0];const caps=(typeof track.getCapabilities==='function')?track.getCapabilities():{};if(caps.torch){flashTrack=track;if(fb)fb.disabled=false;}}}}catch(e){}
+    }).catch(()=>{showToast(t('toast_camera_fail'));closeScanner();});
+}
+async function closeScanner(){if(flashTrack&&flashOn)try{await flashTrack.applyConstraints({advanced:[{torch:false}]});}catch(e){}flashOn=false;flashTrack=null;if(html5QrCode)try{await html5QrCode.stop();}catch(e){}const scannerEl=document.getElementById('modal-scanner');if(scannerEl&&!scannerEl.classList.contains('hidden')){scannerEl.classList.add('hidden');_unlockBodyScroll();}}
+async function toggleFlash(){if(!flashTrack)return showToast(t('flash')+' N/A');try{flashOn=!flashOn;await flashTrack.applyConstraints({advanced:[{torch:flashOn}]});const btn=document.getElementById('flash-btn');if(btn)btn.classList.toggle('flash-on',flashOn);showToast(flashOn?"⚡ "+t('flash')+" ON":t('flash')+" OFF");}catch(e){flashOn=!flashOn;showToast(t('flash')+" Error");}}
+
+// ── Home ─────────────────────────────────────────────────────────────────
+function renderHome(){
+    let profit=0,omzet=0,debtT=0,best={};
+    const hourMap=new Array(24).fill(0);
+    const today=new Date().toISOString().split('T')[0];
+    logs.forEach(l=>{const a=rawIDR(l.amount);profit+=(a-rawIDR(l.total_cost));if(l.date===today)omzet+=a;if(l.created_at)hourMap[new Date(l.created_at).getHours()]++;if(l.items)l.items.forEach(it=>best[it.name]=(best[it.name]||0)+it.qty);});
+    debts.forEach(d=>{if(d.status!==t('debt_paid_status'))debtT+=rawIDR(d.balance);});
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.innerText=v;};
+    set('dash-profit',formatIDR(profit));set('dash-omzet',formatIDR(omzet));set('dash-debt',formatIDR(debtT));
+    const lowCount=items.filter(i=>i.stock<config.minStock).length;
+    set('dash-low-stock',lowCount+' '+t('items_low'));
+    const top=Object.entries(best).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    const elTop=document.getElementById('top-products');
+    if(elTop)elTop.innerHTML=top.map(([n,q])=>`<div class="flex justify-between items-center p-3 rounded-2xl font-bold text-[10px] surface"><span>${n}</span><span class="text-indigo-500">${q} ${t('pcs')}</span></div>`).join('')||`<p class="text-center opacity-30 text-[10px] py-4">${t('no_data')}</p>`;
+    initChart(hourMap);
+    applyBalanceUI();
+}
+function initChart(data){const canvas=document.getElementById('hourChart');if(!canvas)return;if(mainChart)mainChart.destroy();const isDark=document.body.classList.contains('dark');mainChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+':00'),datasets:[{data,backgroundColor:'#4f46e5',borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{display:false},x:{grid:{display:false},ticks:{font:{size:7},color:isDark?'#556070':'#8892aa'}}}}});}
+
+// ── Stock Management ──────────────────────────────────────────────────────
+function getStockStatus(stock){if(stock<=0)return 'critical';if(stock<=config.minStock)return 'low';return 'ok';}
+function addStockHistory(productId,productName,type,qty,note=''){const entry={id:'SH-'+Date.now()+'-'+Math.random().toString(36).slice(2,5),productId,productName,type,qty,note:note||'',date:new Date().toISOString(),operator:'Admin'};stockHistory.unshift(entry);if(stockHistory.length>200)stockHistory=stockHistory.slice(0,200);return entry;}
+function checkStockAlerts(){
+    const critical=items.filter(i=>i.stock<=0),low=items.filter(i=>i.stock>0&&i.stock<=config.minStock),total=critical.length+low.length;
+    const dot=document.getElementById('nav-stock-dot');if(dot)dot.classList.toggle('hidden',total===0);
+    const badge=document.getElementById('notif-count-badge'),sbBadge=document.getElementById('sb-stock-badge');
+    if(badge){badge.innerText=total;badge.style.display=total>0?'flex':'none';}
+    if(sbBadge){sbBadge.innerText=total;sbBadge.classList.toggle('hidden',total===0);}
+    return{critical,low};
+}
+function openNotifPanel(){
+    const{critical,low}=checkStockAlerts();
+    const list=document.getElementById('notif-list');let html='';
+    if(critical.length===0&&low.length===0){html=`<div class="text-center py-10"><div class="text-4xl mb-3">✅</div><p class="text-sm font-bold text-muted">${t('notif_all_safe')}</p></div>`;}
+    critical.forEach(i=>{html+=`<div class="flex items-center gap-4 p-4 bg-red-50 rounded-2xl border border-red-200"><div class="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-circle-exclamation"></i></div><div class="flex-1"><p class="text-xs font-black text-red-700">${i.name}</p><p class="text-[9px] text-red-500 uppercase font-bold">${t('notif_empty_stock')} • ${i.stock} ${t('notif_unit')}</p></div><button onclick="openStockModal('in','${i.id}')" class="text-[9px] font-black text-red-600 bg-red-100 px-3 py-1.5 rounded-xl uppercase">${t('notif_fill')}</button></div>`;});
+    low.forEach(i=>{html+=`<div class="flex items-center gap-4 p-4 bg-amber-50 rounded-2xl border border-amber-200"><div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="flex-1"><p class="text-xs font-black text-amber-700">${i.name}</p><p class="text-[9px] text-amber-500 uppercase font-bold">${t('notif_low_stock')} • ${t('notif_remaining')} ${i.stock} ${t('notif_unit')}</p></div><button onclick="openStockModal('in','${i.id}')" class="text-[9px] font-black text-amber-600 bg-amber-100 px-3 py-1.5 rounded-xl uppercase">${t('notif_fill')}</button></div>`;});
+    list.innerHTML=html;openModal('modal-notif');
+}
+function renderStockTab(){
+    const minS=config.minStock,critical=items.filter(i=>i.stock<=0).length,low=items.filter(i=>i.stock>0&&i.stock<=minS).length,total=items.length;
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.innerText=v;};
+    set('stat-total-products',total);set('stat-low-stock',low);set('stat-empty-stock',critical);
+    const alertBadge=document.getElementById('stock-alert-badge');if(alertBadge){const n=critical+low;if(n>0){alertBadge.innerText=n+' ⚠';alertBadge.classList.remove('hidden');}else alertBadge.classList.add('hidden');}
+    renderStockList();renderStockHistory();checkStockAlerts();
+}
+function renderStockList(){
+    const filter=document.getElementById('stock-filter')?.value||'all';
+    const list=document.getElementById('stock-product-list');if(!list)return;
+    let filtered=items.filter(i=>{const s=getStockStatus(i.stock);return filter==='all'||s===filter;});
+    filtered.sort((a,b)=>a.stock-b.stock);
+    if(filtered.length===0){list.innerHTML=`<p class="text-center opacity-30 py-8 text-sm">${t('no_data')}</p>`;return;}
+    list.innerHTML=filtered.map(i=>{
+        const s=getStockStatus(i.stock);
+        const badgeClass=s==='critical'?'badge-critical':s==='low'?'badge-low':'badge-ok';
+        const badgeText=s==='critical'?t('badge_empty'):s==='low'?t('badge_low'):t('badge_ok');
+        const barPct=Math.min(100,Math.round((i.stock/Math.max(1,config.minStock*4))*100));
+        const barColor=s==='critical'?'bg-red-500':s==='low'?'bg-amber-400':'bg-emerald-400';
+        return `<div class="card p-5 space-y-3 shadow-sm">
+            <div class="flex justify-between items-start">
+                <div class="flex-1"><p class="text-xs font-black">${i.name}</p><p class="text-[9px] uppercase text-muted">${i.category||'Umum'} • ${i.barcode||'no-barcode'}</p></div>
+                <span class="stock-badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex-1 h-2 rounded-full overflow-hidden surface"><div class="${barColor} h-full rounded-full transition-all" style="width:${barPct}%"></div></div>
+                <span class="text-sm font-black ${s==='critical'?'text-red-500':s==='low'?'text-amber-500':'text-emerald-600'}">${i.stock}</span>
+                <span class="text-[9px] text-muted">${t('notif_unit')}</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openStockModal('in','${i.id}')" class="flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase border text-emerald-600" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2)"><i class="fa-solid fa-plus mr-1"></i> ${t('stock_in')}</button>
+                <button onclick="openStockModal('out','${i.id}')" class="flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase border text-rose-600" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2)"><i class="fa-solid fa-minus mr-1"></i> ${t('stock_out')}</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+function renderStockHistory(){
+    const list=document.getElementById('stock-history-list');if(!list)return;
+    if(stockHistory.length===0){list.innerHTML=`<p class="text-center opacity-30 py-6 text-sm">${t('no_data')}</p>`;return;}
+    list.innerHTML=stockHistory.slice(0,30).map(h=>{
+        const isIn=h.type==='in',isOpname=h.type==='opname';
+        const icon=isOpname?'clipboard-check':isIn?'arrow-down':'arrow-up';
+        const colorClass=isOpname?'text-indigo-500':isIn?'text-emerald-500':'text-rose-500';
+        const bgClass=isOpname?'rgba(99,102,241,0.1)':isIn?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)';
+        const badge=isOpname?'badge-opname':isIn?'badge-in':'badge-out';
+        const badgeText=isOpname?t('badge_opname'):isIn?t('badge_in'):t('badge_out');
+        return `<div class="flex items-center gap-3 p-4 card shadow-sm">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${colorClass}" style="background:${bgClass}"><i class="fa-solid fa-${icon} text-xs"></i></div>
+            <div class="flex-1 min-w-0"><p class="text-[11px] font-black truncate">${h.productName}</p><p class="text-[8px] uppercase truncate text-muted">${h.note||'-'} • ${new Date(h.date).toLocaleDateString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</p></div>
+            <div class="text-right shrink-0"><span class="stock-badge ${badge}">${badgeText}</span><p class="text-xs font-black mt-1">${isIn||isOpname?'+':'-'}${h.qty}</p></div>
+        </div>`;
+    }).join('');
+}
+async function clearStockHistory(){
+    const ok = await showConfirm(t('confirm_clear_history'), t('confirm_delete_product_desc'), t('btn_delete'));
+    if(!ok) return;
+    stockHistory=[];saveStorage();renderStockHistory();showToast(t('toast_history_deleted'));
+}
+
+function openStockModal(type,preSelectId=null){
+    currentStockMoveType=type;
+    const title=document.getElementById('stock-move-title'),btn=document.getElementById('sm-btn');
+    if(type==='in'){title.innerText=t('stock_in');title.className='text-xl font-black text-emerald-500';if(btn)btn.className='w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase shadow-xl';}
+    else{title.innerText=t('stock_out');title.className='text-xl font-black text-rose-500';if(btn)btn.className='w-full py-4 bg-rose-600 text-white rounded-2xl font-black text-xs uppercase shadow-xl';}
+    const sel=document.getElementById('sm-product');
+    sel.innerHTML=items.map(i=>`<option value="${i.id}">${i.name} (${t('current_stock')}: ${i.stock})</option>`).join('');
+    if(preSelectId)sel.value=preSelectId;
+    document.getElementById('sm-qty').value='';document.getElementById('sm-note').value='';
+    updateSmCurrentStock();sel.onchange=updateSmCurrentStock;
+    openModal('modal-stock-move');
+}
+function updateSmCurrentStock(){const sel=document.getElementById('sm-product');const id=sel?.value;const item=items.find(i=>String(i.id)===String(id));const el=document.getElementById('sm-current-stock');if(el)el.innerText=item?item.stock+' '+t('notif_unit'):'—';}
+function submitStockMove(){const sel=document.getElementById('sm-product');const id=sel?.value;const qty=Number(document.getElementById('sm-qty').value);const note=document.getElementById('sm-note').value;if(!id||!qty||qty<=0)return showToast(t('toast_fill_data'));const item=items.find(i=>String(i.id)===String(id));if(!item)return showToast(t('toast_product_not_found'));if(currentStockMoveType==='out'&&qty>item.stock)return showToast(t('toast_stock_not_enough'));if(currentStockMoveType==='in')item.stock+=qty;else item.stock-=qty;addStockHistory(item.id,item.name,currentStockMoveType,qty,note||(currentStockMoveType==='in'?t('sh_manual_in'):t('sh_manual_out')));saveStorage();showToast(currentStockMoveType==='in'?`+${qty} ${t('toast_stock_added')}`:`-${qty} ${t('toast_stock_reduced')}`);closeModal('modal-stock-move');renderStockTab();renderItems();renderPos();checkStockAlerts();}
+
+function openOpnameModal(){
+    opnameData={};
+    const list=document.getElementById('opname-list');
+    list.innerHTML=items.map(i=>`
+        <div class="card p-4 shadow-sm space-y-2">
+            <div class="flex justify-between items-center">
+                <div><p class="text-xs font-black">${i.name}</p><p class="text-[9px] uppercase text-muted">${i.category||'Umum'}</p></div>
+                <span class="text-sm font-black text-muted">${t('opname_system')}: <strong class="${getStockStatus(i.stock)==='critical'?'text-red-500':getStockStatus(i.stock)==='low'?'text-amber-500':'text-indigo-500'}">${i.stock}</strong></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <label class="text-[8px] font-black uppercase w-20 shrink-0 text-muted">${t('opname_physical')}</label>
+                <input type="number" min="0" placeholder="${t('opname_physical')}..."
+                    oninput="opnameData['${i.id}']={id:${i.id},name:'${i.name.replace(/'/g,"\\'")}',physical:Number(this.value),system:${i.stock}}"
+                    class="flex-1 p-3 border rounded-2xl text-sm font-bold outline-none text-center">
+            </div>
+        </div>`).join('');
+    openModal('modal-opname');
+}
+function submitOpname(){const entries=Object.values(opnameData);if(entries.length===0)return showToast(t('toast_opname_no_data'));let changed=0;entries.forEach(e=>{const item=items.find(i=>i.id==e.id);if(!item)return;const diff=e.physical-e.system;if(diff===0)return;addStockHistory(item.id,item.name,'opname',Math.abs(diff),`Opname: ${e.system} → ${e.physical} (${diff>0?'+':''}${diff})`);item.stock=e.physical;changed++;});if(changed===0)return showToast(t('toast_opname_no_change'));saveStorage();showToast(`${t('toast_opname_done')} ${changed} ${t('toast_products_updated')}`);closeModal('modal-opname');renderStockTab();renderItems();renderPos();checkStockAlerts();}
+
+function openMinStockSettings(){document.getElementById('min-stock-input').value=config.minStock||5;openModal('modal-minstock');}
+function saveMinStock(){const val=Number(document.getElementById('min-stock-input').value);if(!val||val<1)return showToast(t('toast_fill_data'));config.minStock=val;localStorage.setItem('dk_config',JSON.stringify(config));const el=document.getElementById('min-stock-display');if(el)el.innerText=val;closeModal('modal-minstock');showToast(t('toast_min_stock_saved'));checkStockAlerts();}
+
+// ── Settings ─────────────────────────────────────────────────────────────
+function toggleDarkMode(){config.darkMode=document.getElementById('dark-mode-toggle').checked;document.body.classList.toggle('dark',config.darkMode);localStorage.setItem('dk_config',JSON.stringify(config));renderHome();}
+function openStoreSettings(){openModal('modal-store-cfg');document.getElementById('cfg-name').value=config.storeName;document.getElementById('cfg-address').value=config.storeAddress;document.getElementById('cfg-phone').value=config.storePhone;document.getElementById('cfg-url').value=config.url;}
+async function saveSettings(){config={...config,storeName:document.getElementById('cfg-name').value,storeAddress:document.getElementById('cfg-address').value,storePhone:document.getElementById('cfg-phone').value,url:document.getElementById('cfg-url').value};localStorage.setItem('dk_config',JSON.stringify(config));loadSettings();closeModal('modal-store-cfg');showToast(t('toast_save_success'));syncCloud({type:'settings',id:'app_cfg',data:config});}
+function loadSettings(){
+    const s=config;
+    const darkToggle=document.getElementById('dark-mode-toggle');if(darkToggle)darkToggle.checked=s.darkMode;
+    document.body.classList.toggle('dark',s.darkMode);
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.innerText=v;};
+    set('profile-name',s.storeName);
+    set('profile-address-display',s.storeAddress||t('address_not_set'));
+    set('min-stock-display',s.minStock||5);
+    set('sb-store-name',s.storeName);set('sb-store-addr',s.storeAddress||t('address_not_set'));
+    const letter=(s.storeName||'D')[0].toUpperCase();
+    const updateLogo=(el,isImg)=>{if(!el)return;if(s.logo)el.innerHTML=`<img src="${s.logo}" class="w-full h-full object-cover" alt="Logo">`;else el.innerHTML=`<span style="${isImg?'color:#fff;font-size:inherit;font-weight:900;':''}">${letter}</span>`;};
+    updateLogo(document.getElementById('sb-logo'),true);
+    const pp=document.getElementById('profile-logo-preview');if(pp){if(s.logo)pp.innerHTML=`<img src="${s.logo}" class="w-full h-full object-cover">`;else pp.innerHTML=`<span class="text-xl font-black text-white">${letter}</span>`;}
+    const lpCfg=document.getElementById('logo-preview-cfg');if(lpCfg){if(s.logo)lpCfg.innerHTML=`<img src="${s.logo}" class="w-full h-full object-cover">`;else lpCfg.innerHTML=`<i class="fa-solid fa-image text-muted text-2xl"></i>`;}
+    const devNameEl=document.getElementById('printer-device-name');
+    if(devNameEl)devNameEl.innerText=btConnected?(btDevice?.name||t('settings_printer')):(btPrefs.lastName?`${t('printer_not_connected')}: ${btPrefs.lastName}`:t('printer_not_connected'));
+    const langNames={id:'🇮🇩 Bahasa Indonesia',en:'🇬🇧 English',ms:'🇲🇾 Bahasa Melayu'};
+    const langEl=document.getElementById('current-lang-display');
+    if(langEl)langEl.textContent=langNames[currentLang]||'Bahasa Indonesia';
+}
+function handleLogoUpload(input){if(input.files&&input.files[0]){const r=new FileReader();r.onload=(e)=>{config.logo=e.target.result;localStorage.setItem('dk_config',JSON.stringify(config));loadSettings();};r.readAsDataURL(input.files[0]);}}
+async function syncCloud(d){if(!config.url)return;try{await fetch(config.url,{method:'POST',mode:'no-cors',body:JSON.stringify(d)});}catch(e){}}
+
+// ── Items ─────────────────────────────────────────────────────────────────
+function renderItems(){
+    const q=(document.getElementById('item-search')||{value:''}).value.toLowerCase();
+    const list=document.getElementById('item-list');if(!list)return;
+    list.innerHTML=items.filter(i=>i.name.toLowerCase().includes(q)||String(i.barcode).includes(q)).map(i=>{
+        const s=getStockStatus(i.stock);
+        const dot=s==='critical'?'bg-red-500':s==='low'?'bg-amber-400':'bg-emerald-400';
+        return `<div class="card p-5 flex justify-between items-center shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-2.5 h-2.5 rounded-full ${dot} shrink-0"></div>
+                <div>
+                    <p class="text-xs font-black">${i.name}</p>
+                    <p class="text-[9px] uppercase text-muted">${i.category||'Umum'} • ${formatIDR(i.price)} • ${t('current_stock')}: <strong class="${s==='critical'?'text-red-500':s==='low'?'text-amber-500':''}">${i.stock}</strong></p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openProductModal(${i.id})" class="w-9 h-9 rounded-xl flex items-center justify-center text-indigo-500" style="background:rgba(99,102,241,0.1)"><i class="fa-solid fa-edit text-xs"></i></button>
+                <button onclick="deleteProduct(${i.id})" class="w-9 h-9 rounded-xl flex items-center justify-center text-rose-500" style="background:rgba(239,68,68,0.1)"><i class="fa-solid fa-trash-can text-xs"></i></button>
+            </div>
+        </div>`;
+    }).join('')||`<p class="text-center opacity-30 py-10">${t('no_data')}</p>`;
+}
+
+// ── DELETE PRODUCT — with confirm dialog ──────────────────────────────────
+async function deleteProduct(id) {
+    const item = items.find(x => x.id == id);
+    const name = item ? item.name : '';
+    const ok = await showConfirm(
+        t('confirm_delete_product_title'),
+        `"${name}" ${t('confirm_delete_product_desc')}`,
+        t('confirm_delete_btn')
+    );
+    if (!ok) return;
+    items = items.filter(x => x.id !== id);
+    saveStorage();
+    renderItems();
+    renderPos();
+    showToast(t('toast_product_deleted'));
+}
+
+function openProductModal(id=null){
+    if(id){const i=items.find(x=>x.id==id);document.getElementById('p-id').value=i.id;document.getElementById('p-barcode').value=i.barcode||'';document.getElementById('p-name').value=i.name;document.getElementById('p-cost').value=i.cost||0;document.getElementById('p-price').value=i.price;document.getElementById('p-stock').value=i.stock;renderCategoryOptions();document.getElementById('p-category').value=i.category||'Umum';}
+    else{document.getElementById('p-id').value='';document.getElementById('p-barcode').value='';document.getElementById('p-name').value='';document.getElementById('p-cost').value='';document.getElementById('p-price').value='';document.getElementById('p-stock').value='';renderCategoryOptions();}
+    openModal('modal-product');
+}
+async function saveProduct(){const idIn=document.getElementById('p-id').value;const d={id:idIn?Number(idIn):Date.now(),barcode:document.getElementById('p-barcode').value,name:document.getElementById('p-name').value,cost:Number(document.getElementById('p-cost').value),price:Number(document.getElementById('p-price').value),stock:Number(document.getElementById('p-stock').value),category:document.getElementById('p-category').value};if(!d.name)return showToast(t('toast_fill_product_name'));if(idIn){const idx=items.findIndex(x=>x.id==idIn);items[idx]=d;}else items.push(d);saveStorage();closeModal('modal-product');renderItems();renderPos();checkStockAlerts();showToast(t('toast_save_success'));await syncCloud(d);}
+
+// ── Data ──────────────────────────────────────────────────────────────────
+function getFilteredLogs(){const f=(document.getElementById('date-filter')||{value:''}).value;return logs.filter(l=>!f||l.date===f);}
+function renderData(){
+    const filtered=getFilteredLogs();const f=(document.getElementById('date-filter')||{value:''}).value;
+    const infoEl=document.getElementById('export-info');if(infoEl)infoEl.innerText=f?`${filtered.length} ${t('transactions')} ${f}`:`${t('all_transactions')} ${filtered.length}`;
+    const list=document.getElementById('data-list');if(!list)return;
+    list.innerHTML=filtered.slice().reverse().map(l=>`
+        <div onclick='showReceipt(${JSON.stringify(l)})' class="card p-5 flex justify-between items-center active:scale-95 transition-all cursor-pointer shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs text-indigo-500" style="background:rgba(99,102,241,0.1)"><i class="fa-solid fa-receipt"></i></div>
+                <div>
+                    <p class="text-[11px] font-black line-clamp-1">${l.items?l.items.map(i=>i.name).join(', '):'Manual'}</p>
+                    <p class="text-[8px] uppercase text-muted">${l.date} • ${l.method}</p>
+                </div>
+            </div>
+            <p class="text-xs font-black text-indigo-600">${formatIDR(l.amount)}</p>
+        </div>`).join('')||`<p class="text-center opacity-30 py-10">${t('no_data')}</p>`;
+}
+
+// ── Export ────────────────────────────────────────────────────────────────
+function exportExcel(){if(typeof XLSX==='undefined')return showToast(t('toast_excel_fail'));const filtered=getFilteredLogs();if(filtered.length===0)return showToast(t('toast_no_data'));try{const txHeader=[["ID","Tanggal","Waktu","Item","Total","Modal","Profit","Tunai","QRIS","Kembalian","Metode"]];const txRows=filtered.map(l=>[l.id,l.date||'-',l.created_at?new Date(l.created_at).toLocaleTimeString('id-ID'):'-',(l.items||[]).map(i=>`${i.name} x${i.qty}`).join(' | '),rawIDR(l.amount),rawIDR(l.total_cost),rawIDR(l.amount)-rawIDR(l.total_cost),rawIDR(l.pay_cash),rawIDR(l.pay_qris),rawIDR(l.change),l.method]);const tAmt=filtered.reduce((a,l)=>a+rawIDR(l.amount),0);const tCost=filtered.reduce((a,l)=>a+rawIDR(l.total_cost),0);txRows.push([],[" TOTAL","","","",tAmt,tCost,tAmt-tCost,filtered.reduce((a,l)=>a+rawIDR(l.pay_cash),0),filtered.reduce((a,l)=>a+rawIDR(l.pay_qris),0),filtered.reduce((a,l)=>a+rawIDR(l.change),0),""]);const wsTx=XLSX.utils.aoa_to_sheet([...txHeader,...txRows]);const invHeader=[["ID","Barcode","Nama","Kategori","Modal","Jual","Stok","Status","Nilai Stok"]];const invRows=items.map(i=>[i.id,i.barcode||'-',i.name,i.category||'Umum',rawIDR(i.cost),rawIDR(i.price),i.stock,t('badge_'+getStockStatus(i.stock)),rawIDR(i.cost)*i.stock]);const wsInv=XLSX.utils.aoa_to_sheet([...invHeader,...invRows]);const shHeader=[["ID","Produk","Tipe","Qty","Keterangan","Tanggal"]];const shRows=stockHistory.map(h=>[h.id,h.productName,h.type,h.qty,h.note,new Date(h.date).toLocaleString('id-ID')]);const wsSh=XLSX.utils.aoa_to_sheet([...shHeader,...shRows]);const debtHeader=[["ID","Pelanggan","Total","Terbayar","Sisa","Jatuh Tempo","Status"]];const debtRows=debts.map(d=>[d.id,d.customer,rawIDR(d.total),rawIDR(d.paid),rawIDR(d.balance),d.dueDate,d.status]);const wsDebt=XLSX.utils.aoa_to_sheet([...debtHeader,...debtRows]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,wsTx,"Transaksi");XLSX.utils.book_append_sheet(wb,wsInv,"Inventaris");XLSX.utils.book_append_sheet(wb,wsSh,"Riwayat Stok");XLSX.utils.book_append_sheet(wb,wsDebt,"Hutang");const f=(document.getElementById('date-filter')||{value:''}).value;XLSX.writeFile(wb,`DheKasir_Laporan${f?'_'+f:''}_${Date.now()}.xlsx`);showToast(t('toast_excel_success'));}catch(e){console.error(e);showToast(t('toast_excel_fail'));}}
+
+function exportPDF(){if(typeof window.jspdf==='undefined')return showToast(t('toast_pdf_fail'));const filtered=getFilteredLogs();if(filtered.length===0)return showToast(t('toast_no_data'));try{const{jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});const sn=config.storeName||'DheKasir',sa=config.storeAddress||'-',sp=config.storePhone||'';const f=(document.getElementById('date-filter')||{value:''}).value;const printed=new Date().toLocaleString('id-ID');const pc=[79,70,229],sc=[16,185,129],dc=[239,68,68];const PW=210,PH=297,M=14,CW=PW-M*2;function hdr(p){doc.setFillColor(...pc);doc.rect(0,0,PW,22,'F');doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);doc.text(sn,M,10);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(`${sa}${sp?' | '+sp:''}`,M,15.5);doc.text(`Hal. ${p}`,PW-M,10,{align:'right'});doc.text(`Dicetak: ${printed}`,PW-M,15.5,{align:'right'});}hdr(1);const tAmt=filtered.reduce((a,l)=>a+rawIDR(l.amount),0);const tCost=filtered.reduce((a,l)=>a+rawIDR(l.total_cost),0);const tDebt=debts.filter(d=>d.status!==t('debt_paid_status')).reduce((a,d)=>a+rawIDR(d.balance),0);const kpis=[{label:t('dash_today_income'),value:formatIDR(tAmt),color:pc},{label:t('dash_net_profit'),value:formatIDR(tAmt-tCost),color:sc},{label:t('dash_total_receivable'),value:formatIDR(tDebt),color:dc},{label:t('nav_reports'),value:`${filtered.length}`,color:[100,100,120]}];const bw=(CW-9)/4;doc.setFillColor(245,245,255);doc.roundedRect(M,26,CW,14,3,3,'F');doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(...pc);doc.text(t('nav_reports').toUpperCase(),M+4,34);doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(100,100,120);doc.text(f?`${t('transactions')}: ${f}`:'All',PW-M-4,34,{align:'right'});kpis.forEach((k,i)=>{const x=M+i*(bw+3),y=44;doc.setFillColor(245,245,255);doc.roundedRect(x,y,bw,18,2,2,'F');doc.setFontSize(6.5);doc.setFont('helvetica','normal');doc.setTextColor(120,120,140);doc.text(k.label,x+bw/2,y+6,{align:'center'});doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...k.color);doc.text(k.value,x+bw/2,y+13,{align:'center'});});doc.autoTable({head:[["ID","Date","Items","Total","Profit","Method"]],body:filtered.slice().reverse().map(l=>[l.id.substring(0,12)+'…',l.date,(l.items||[]).slice(0,2).map(i=>`${i.name} x${i.qty}`).join(', ')+(l.items&&l.items.length>2?'…':''),formatIDR(l.amount),formatIDR(rawIDR(l.amount)-rawIDR(l.total_cost)),l.method]),startY:68,margin:{left:M,right:M},styles:{fontSize:7,cellPadding:2.5},headStyles:{fillColor:pc,textColor:[255,255,255],fontStyle:'bold'},alternateRowStyles:{fillColor:[248,248,255]},didDrawPage:(d)=>{if(d.pageNumber>1)hdr(d.pageNumber);}});doc.save(`DheKasir_Laporan${f?'_'+f:''}_${Date.now()}.pdf`);showToast(t('toast_pdf_success'));}catch(e){console.error(e);showToast(t('toast_pdf_fail'));}}
+
+// ── Debts ─────────────────────────────────────────────────────────────────
+function renderDebts(){
+    const label=document.getElementById('debt-count-label');if(label)label.innerText=debts.filter(d=>d.status!==t('debt_paid_status')).length+" ORANG";
+    const list=document.getElementById('debt-list');if(!list)return;
+    list.innerHTML=debts.slice().reverse().map(d=>`
+        <div onclick="openDebtDetail('${d.id}')" class="card p-5 flex justify-between items-center active:scale-95 cursor-pointer shadow-sm ${d.dueDate!=='-'&&new Date(d.dueDate)<new Date()&&d.status!==t('debt_paid_status')?'border-rose-400':''}">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 ${d.status===t('debt_paid_status')?'bg-emerald-100 text-emerald-600':'bg-rose-100 text-rose-600'} rounded-2xl flex items-center justify-center text-xs"><i class="fa-solid fa-user-clock"></i></div>
+                <div><p class="text-xs font-black">${d.customer}</p><p class="text-[8px] uppercase text-muted">${t('deadline')}: ${d.dueDate}</p></div>
+            </div>
+            <div class="text-right"><p class="text-xs font-black">${formatIDR(d.balance)}</p><span class="text-[7px] font-black opacity-40 uppercase">${d.status}</span></div>
+        </div>`).join('')||`<p class="text-center opacity-30 py-10">${t('debt_book_empty')}</p>`;
+}
+function openDebtDetail(id){const d=debts.find(x=>x.id===id);currentDebtId=id;document.getElementById('det-debt-name').innerText=d.customer;document.getElementById('det-debt-id').innerText=d.id;document.getElementById('det-debt-total').innerText=formatIDR(d.total);document.getElementById('det-debt-paid').innerText=formatIDR(d.paid);document.getElementById('det-debt-rem').innerText=formatIDR(d.balance);openModal('modal-debt-detail');}
+async function payInstallment(){const amt=Number(document.getElementById('ins-amt').value);if(!amt||amt<=0)return showToast(t('toast_fill_data'));const d=debts.find(x=>x.id===currentDebtId);d.paid+=amt;d.balance=d.total-d.paid;if(d.balance<=0)d.status=t('debt_paid_status');saveStorage();closeModal('modal-debt-detail');renderDebts();await syncCloud({type:'debt_record',...d});}
+
+// ── WhatsApp ──────────────────────────────────────────────────────────────
+function shareWhatsApp(){if(!lastReceiptData)return;const d=lastReceiptData;let m=`*${config.storeName}*\n`;m+=`${new Date(d.created_at||Date.now()).toLocaleString('id-ID')}\n\n`;(d.items||[]).forEach(i=>{m+=`• ${i.name} x${i.qty} = ${formatIDR(i.price*i.qty)}\n`;});m+=`\n*${t('total')}: ${formatIDR(d.amount)}*`;window.open(`https://wa.me/?text=${encodeURIComponent(m)}`,'_blank');}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+window.onload = async () => {
+    applyTranslations();
+    loadSettings();
+    const saved = localStorage.getItem('dk_active_tab') || 'home';
+    switchTab(saved);
+    renderCategoryOptions();
+    renderPosCategoryChips();
+    checkStockAlerts();
+    _setPrinterUI('offline');
+    applyBalanceUI();
+    await btAutoReconnectOnLoad();
+};
+</script>
+</body>
+</html>
